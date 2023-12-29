@@ -1,8 +1,6 @@
-using JetBrains.Annotations;
-
 namespace Chimp.Models.Api;
 
-[UsedImplicitly]
+[Serializable]
 public record ChimpApiTimeSheetRecord(
     long Id,
     long CustomerId, string CustomerName,
@@ -21,7 +19,7 @@ public record ChimpApiTimeSheetRecord(
     bool Billable,
     List<long> TagIds,
     List<string> TagNames,
-    List<ChimpApiTimeSheetRecordTag> Tags,
+    List<ChimpApiTag>? Tags,
 
     string ExternalUrl,
     string ExternalName,
@@ -41,6 +39,3 @@ public record ChimpApiTimeSheetRecord(
     bool TaskBalanceOvertimeSubtract,
     double TaskBalanceOvertimePercentage,
     string Timezone);
-    
-[UsedImplicitly]
-public record ChimpApiTimeSheetRecordTag(long CompanyId, string Name, bool Active, long Type, long Id);

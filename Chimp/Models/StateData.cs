@@ -2,6 +2,7 @@ using Chimp.Models.Api;
 
 namespace Chimp.Models;
 
+[Serializable]
 public class StateData
 {
     public ChimpApiUser? User { get; set; }
@@ -10,6 +11,7 @@ public class StateData
     public string? LoginPassword { get; set; }
     public DateTimeOffset? AuthTokenExpirationDate { get; set; }
     public DateTime? TimeTravelingDate { get; set; }
-    public List<TimeSheetViewRow>? CachedTimeSheet { get; set; }
-    public List<ProjectViewRow>? CachedProjects { get; set; }
-}
+    public List<TimeSheetRowViewModel>? CachedTimeSheet { get; set; }
+     public List<ProjectViewModel>? CachedProjects { get; set; }
+     public List<TagViewModel>? CachedTags { get; set; }
+ }

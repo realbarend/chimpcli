@@ -1,6 +1,4 @@
-using JetBrains.Annotations;
-
 namespace Chimp.Models.Api;
 
-[UsedImplicitly]
+[Serializable]
 public record ChimpApiUser(long Id, string UserName, string Language, double ContractHours);

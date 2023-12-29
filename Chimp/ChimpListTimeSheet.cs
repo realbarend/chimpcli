@@ -1,4 +1,4 @@
-using Chimp.Models.Api;
+using Chimp.Models;
 
 namespace Chimp;
 
@@ -21,7 +21,7 @@ public class ChimpListTimeSheet(ChimpService service)
             Console.WriteLine();
             Console.WriteLine($"{displayDay.ToUpperInvariant()} =============================================================================");
 
-            var previousRow = (TimeSheetViewRow?)null;
+            var previousRow = (TimeSheetRowViewModel?)null;
             var dayRows = rows.Where(r => r.Date.Date == date).ToList();
             foreach (var row in dayRows.OrderBy(d => d.Start))
             {

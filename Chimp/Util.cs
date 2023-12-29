@@ -2,6 +2,8 @@ using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
+using Chimp.Models;
 
 namespace Chimp;
 
@@ -48,10 +50,45 @@ public static class Util
         };
     }
 
+    public static bool TryParseProjectSpec(string projectSpec, out int project, out int[] tags)
+    {
+        // project match: p1 or p1-1 or p1-1,2
+
+        project = 0;
+        tags = Array.Empty<int>();
+        var projectMatch = Regex.Match(projectSpec, @"^p(?<Project>\d{1,2}(?:-\d{1,2}(?:,\d{1,2})*)?)$");
+        if (!projectMatch.Success) return false;
+
+        var strProject = projectMatch.Groups["Project"].Value;
+        if (strProject.Contains('-'))
+        {
+            tags = strProject[(strProject.IndexOf('-') + 1)..].Split(',').Select(int.Parse).ToArray();
+            strProject = strProject[..strProject.IndexOf('-')];
+        }
+
+        project = int.Parse(strProject);
+        return true;
+    }
+
     public static Cookie? GetCookie(this HttpResponseMessage response, Uri uri, string cookieName)
     {
         var cookies = new CookieContainer();
         foreach (var cookieHeader in response.Headers.GetValues("Set-Cookie")) cookies.SetCookies(uri, cookieHeader);
         return cookies.GetCookies(uri).FirstOrDefault(c => c.Name == cookieName);
+    }
+    
+    public static string? Truncate(this string? s, int length) => s == null || s.Length < length ? s : s[..length];
+
+    public static ProjectViewModel GetProjectByLine(this List<ProjectViewModel> projects, int line)
+    {
+        return projects.SingleOrDefault(p => p.Line == line)
+            ?? throw new PebcakException($"local cache does not contain line #{line}");
+    }
+
+    public static List<long> MapTagLinesToIds(this List<TagViewModel> tags, IEnumerable<int> lines)
+    {
+        return lines.Select(tagLine => tags.SingleOrDefault(t => t.Line == tagLine)?.ApiTag.Id
+                                ?? throw new PebcakException($"project cache does not contain tag-line #{tagLine}"))
+            .ToList();
     }
 }

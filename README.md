@@ -58,39 +58,43 @@ Reading your timechimp password from env.CHIMPCLI_PASSWORD
 Login successful, got authtoken valid until <some future date>
 ```
 
-Then you need to know for which projects use can track hours.
-Take note of the line numbers ('1', '2', ...).
+When tracking time, you must always specify the project.
+To minimize keyboard wear, projects are to be referenced as 'p[N]' where N can be found using the 'projects' command:
 
 ```
 # chimp projects
 
-[1]  Customer - Project name
-[2]  Customer - A second project
+Available projects:                       Available tags:
+[1]  Customer - Project name              [1] some_tag
+[2]  Customer - A second project          [2] another_tag
 [3]  etc...
 
 ```
+
+You can also append tags if needed.
+Example: the project "A second project" with "some_tag" can be specified as "p2-1". To add both tags: "p2-1,2".
 
 That's it, you can now add, update, remove or move tracked hours:
 
 ```
 # chimp add p2 830-930 my first cli tracked hour hooray
 
-MAANDAG =============================================================================
+MONDAY =============================================================================
 [ 1] A second project (Customer) p2                08:30-09:30 (1'00) my first cli tracked hour hooray
 
 
-# chimp add p1 930+30 something else
+# chimp add p1-2 930+30 something else
 
-MAANDAG =============================================================================
+MONDAY =============================================================================
 [ 1] A second project (Customer) p2                08:30-09:30 (1'00) my first cli tracked hour hooray
-[ 2] Project name (Customer) p1                    09:30-10:00 (0'30) something else
+[ 2] Project name (Customer) p1                    09:30-10:00 (0'30) something else [tags: another_tag]
 
 
 # chimp update 1 updated my note
 
-MAANDAG =============================================================================
+MONDAY =============================================================================
 [ 1] A second project (Customer) p2                08:30-09:30 (1'00) updated my note
-[ 2] Project name (Customer) p1                    09:30-10:00 (0'30) something else
+[ 2] Project name (Customer) p1                    09:30-10:00 (0'30) something else [tags: another_tag]
 
 # chimp help
 

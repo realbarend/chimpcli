@@ -68,38 +68,72 @@ public class ChimpService
         return new Localizer(Environment.GetEnvironmentVariable("CHIMPCLI_LANGUAGE") ?? _state.User.Language);
     }
 
-    public async Task<IList<ProjectViewRow>> GetProjects()
+    public async Task<List<ProjectViewModel>> GetProjects()
     {
-        if (_state.User == null) throw new PebcakException("cannot list projects without first authorizing: login first");
-
-        var projects = new List<ProjectViewRow>();
-        var rawProjects = await ApiCall(HttpMethod.Get, $"project/{_state.User.UserName}/uiselectbyuser");
-        foreach (var apiProject in Util.JsonDeserialize<List<ChimpApiProject>>(rawProjects, false).OrderBy(p => p.Intern).ThenBy(p => p.Name))
-        {
-            var rawTasks = await ApiCall(HttpMethod.Get, $"projecttask/uiselect%2Fproject/{apiProject.Id}");
-            foreach (var apiTask in Util.JsonDeserialize<List<ChimpApiProjectTask>>(rawTasks, false).OrderBy(t => t.Name))
-            {
-                projects.Add(new ProjectViewRow(projects.Count + 1, apiProject.CustomerId, apiProject.Id, apiTask.Id, apiProject.Name, apiTask.Name));
-            }
-        }
-
-        _state.CachedProjects = projects;
-        PersistState();
-        return _state.CachedProjects;
+        if (_state.User == null) throw new PebcakException("cannot list tags without first authorizing: login first");
+        _state.CachedProjects = null;
+        return await GetProjectsCached();
     }
 
-    public async Task<(double WeekTotal, double BillableTotal, IList<TimeSheetViewRow> ViewRows)> GetTimeSheet(int? weekOffset)
+    private async Task<List<ProjectViewModel>> GetProjectsCached(bool fetchIfNotCached = true)
+    {
+        if (_state.User == null) throw new PebcakException("cannot access projects without first authorizing: login first");
+        if (_state.CachedProjects == null)
+        {
+            if (!fetchIfNotCached) throw new PebcakException("need to fetch the project list first");
+            var projects = Util.JsonDeserialize<List<ChimpApiProject>>(await ApiCall(HttpMethod.Get, $"project/{_state.User.UserName}/uiselectbyuser"), false).OrderBy(p => p.Intern).ThenBy(p => p.Name).ToList();
+            _state.CachedProjects = new List<ProjectViewModel>();
+            foreach (var project in projects)
+            {
+                foreach (var task in Util.JsonDeserialize<List<ChimpApiProjectTask>>(
+                             await ApiCall(HttpMethod.Get, $"projecttask/uiselect%2Fproject/{project.Id}"), false)
+                             .OrderBy(t => t.Name))
+                {
+                    _state.CachedProjects.Add(new ProjectViewModel(_state.CachedProjects.Count + 1, project, task));
+                }
+            }
+            PersistState();
+        }
+
+        return _state.CachedProjects;
+    }
+    
+    public async Task<List<TagViewModel>> GetTags()
+    {
+        if (_state.User == null) throw new PebcakException("cannot access tags without first authorizing: login first");
+        _state.CachedTags = null;
+        return await GetTagsCached();
+    }
+
+    private async Task<List<TagViewModel>> GetTagsCached(bool fetchIfNotCached = true)
+    {
+        if (_state.User == null) throw new PebcakException("cannot get tags without first authorizing: login first");
+        if (_state.CachedTags == null)
+        {
+            if (!fetchIfNotCached) throw new PebcakException("need to fetch the project list first");
+            _state.CachedTags = Util.JsonDeserialize<List<ChimpApiTag>>(await ApiCall(HttpMethod.Get, $"tag/type%2F1"))
+                .OrderBy(t => t.Name)
+                .Select((t, idx) => new TagViewModel(idx + 1, t)).ToList();
+
+            PersistState();
+        }
+
+        return _state.CachedTags;
+    }
+
+    public async Task<(double WeekTotal, double BillableTotal, List<TimeSheetRowViewModel> TimeSheet)> GetTimeSheet(int? weekOffset)
     {
         if (_state.User == null) throw new PebcakException("cannot get timesheet without first authorizing: login first");
-        if (_state.CachedProjects == null) await GetProjects();
         ProcessWeekOffset();
 
         var responseBody = await ApiCall(HttpMethod.Get, $"time/week/{_state.User.UserName}/{_state.TimeTravelingDate ?? DateTime.Now:yyyy-MM-dd}");
         var data = Util.JsonDeserialize<List<ChimpApiTimeSheetRecord>>(responseBody);
-        
+
+        var projects = await GetProjectsCached();
+        var tags = await GetTagsCached();
         _state.CachedTimeSheet = data
-            .OrderBy(r => r.Date).ThenBy(r => r.Start)
-            .Select((r, i) => new TimeSheetViewRow(i + 1, DateTime.SpecifyKind(r.Date, DateTimeKind.Local), r.Start, r.End, r.Hours, r.ProjectName, _state.CachedProjects?.SingleOrDefault(p => p.ProjectTaskId == r.ProjectTaskId)?.Line, r.TaskName, r.Notes, r))
+            .OrderBy(row => row.Date).ThenBy(r => r.Start)
+            .Select((row, idx) => TimeSheetRowViewModel.FromApiModel(row, idx + 1, projects, tags))
             .ToList();
         PersistState();
         return (data.Sum(r => r.Hours), data.Where(d => d.Billable).Sum(r => r.Hours), _state.CachedTimeSheet);
@@ -120,22 +154,31 @@ public class ChimpService
         }
     }
 
+    public TimeSheetRowViewModel GetCachedTimeSheetViewRow(int line)
+    {
+        if (_state.CachedTimeSheet == null) throw new PebcakException("cannot update timesheet data without first fetching the timesheet");
+        return _state.CachedTimeSheet.SingleOrDefault(r => r.Line == line)
+               ?? throw new PebcakException($"local cache does not contain line #{line}");
+    }
+
     public DateTime? GetTimeTravelingDate() => _state.TimeTravelingDate;
 
-    public async Task AddRow(int projectLine, TimeInterval interval, string notes)
+    public async Task AddRow(int projectLine, IEnumerable<int> tagLines, TimeInterval interval, string notes)
     {
         if (_state.User == null) throw new PebcakException("cannot track time without first authorizing: login first");
-        if (_state.CachedProjects == null) throw new PebcakException("cannot set a project without first fetching the project list");
-        
-        var project = _state.CachedProjects.SingleOrDefault(p => p.Line == projectLine)
-                      ?? throw new PebcakException($"local cache does not contain line #{projectLine}");
+
+        var projects = await GetProjectsCached(false);
+        var tags = await GetTagsCached(false);
+        var project = projects.GetProjectByLine(projectLine);
+        var tagIds = tags.MapTagLinesToIds(tagLines);
 
         await ApiCall(HttpMethod.Post, "time", new
         {
-            _state.User.Id,
-            project.CustomerId,
-            project.ProjectId,
-            project.ProjectTaskId,
+            UserId = _state.User.Id,
+            CustomerId = project.ApiProject.CustomerId,
+            ProjectId = project.ApiProject.Id,
+            ProjectTaskId = project.ApiProjectTask.Id,
+            TagIds = tagIds,
             Date = interval.Start,
             Start = interval.Start,
             End = interval.End,
@@ -147,31 +190,16 @@ public class ChimpService
     
     public async Task UpdateNotes(int line, string notes)
     {
-        if (_state.CachedTimeSheet == null) throw new PebcakException("you cannot update timesheet data without first fetching the timesheet");
-        
-        var existingRow = _state.CachedTimeSheet.SingleOrDefault(r => r.Line == line)?.ChimpApiTimeSheetRecord
-                          ?? throw new PebcakException($"local cache does not contain line #{line}");
-        var updatedRow = existingRow with { Notes = notes, Modified = DateTime.Now };
-
-        await ApiCall(HttpMethod.Put, "time/put", updatedRow);
-    }
-
-    public TimeSheetViewRow GetCachedTimeSheetViewRow(int line)
-    {
-        if (_state.CachedTimeSheet == null) throw new PebcakException("you cannot update timesheet data without first fetching the timesheet");
-        
-        return _state.CachedTimeSheet.SingleOrDefault(r => r.Line == line)
-                  ?? throw new PebcakException($"local cache does not contain line #{line}");
+        await ApiCall(HttpMethod.Put, "time/put", GetCachedTimeSheetViewRow(line).ApiTimeSheetRecord with
+        {
+            Notes = notes,
+            Modified = DateTime.Now,
+        });
     }
     
     public async Task UpdateTimeInterval(int line, TimeInterval interval)
     {
-        if (_state.CachedTimeSheet == null) throw new PebcakException("you cannot update timesheet data without first fetching the timesheet");
-        
-        var existingRow = _state.CachedTimeSheet.SingleOrDefault(r => r.Line == line)?.ChimpApiTimeSheetRecord
-                          ?? throw new PebcakException($"local cache does not contain line #{line}");
-        
-        var updatedRow = existingRow with
+        await ApiCall(HttpMethod.Put, "time/put", GetCachedTimeSheetViewRow(line).ApiTimeSheetRecord with
         {
             Date = interval.Start,
             Start = interval.Start,
@@ -179,38 +207,29 @@ public class ChimpService
             Hours = (interval.End - interval.Start).TotalHours,
             StartEnd = $"{interval.Start:HH:mm}-{interval.End:HH:mm}",
             Modified = DateTime.Now,
-        };
-
-        await ApiCall(HttpMethod.Put, "time/put", updatedRow);
+        });
     }
     
-    public async Task UpdateProject(int line, int projectLine)
+    public async Task UpdateProject(int line, int projectLine, IEnumerable<int> tagLines)
     {
-        if (_state.CachedTimeSheet == null) throw new PebcakException("you cannot update timesheet data without first fetching the timesheet");
-        if (_state.CachedProjects == null) throw new PebcakException("cannot set a project without first fetching the project list");
+        var projects = await GetProjectsCached(false);
+        var tags = await GetTagsCached(false);
+        var project = projects.GetProjectByLine(projectLine);
+        var tagIds = tags.MapTagLinesToIds(tagLines);
 
-        var project = _state.CachedProjects.SingleOrDefault(p => p.Line == projectLine)
-                      ?? throw new PebcakException($"local cache does not contain line #{projectLine}");
-
-        var existingRow = _state.CachedTimeSheet.SingleOrDefault(r => r.Line == line)?.ChimpApiTimeSheetRecord
-                          ?? throw new PebcakException($"local cache does not contain line #{line}");
-        var updatedRow = existingRow with
+        await ApiCall(HttpMethod.Put, "time/put", GetCachedTimeSheetViewRow(line).ApiTimeSheetRecord with
         {
-            CustomerId = project.CustomerId,
-            ProjectId = project.ProjectId,
-            ProjectTaskId = project.ProjectTaskId,
+            CustomerId = project.ApiProject.CustomerId,
+            ProjectId = project.ApiProject.Id,
+            ProjectTaskId = project.ApiProjectTask.Id,
+            TagIds = tagIds,
             Modified = DateTime.Now,
-        };
-
-        await ApiCall(HttpMethod.Put, "time/put", updatedRow);
+        });
     }
     
     public async Task DeleteRow(int line)
     {
-        if (_state.CachedTimeSheet == null) throw new PebcakException("you cannot update timesheet data without first fetching the timesheet");
-
-        var existingRecord = _state.CachedTimeSheet.SingleOrDefault(r => r.Line == line)?.ChimpApiTimeSheetRecord
-                             ?? throw new PebcakException($"local cache does not contain line #{line}");
+        var existingRecord = GetCachedTimeSheetViewRow(line).ApiTimeSheetRecord;
         await ApiCall(HttpMethod.Delete, $"time/delete?id={existingRecord.Id}", Array.Empty<int>());
     }
 

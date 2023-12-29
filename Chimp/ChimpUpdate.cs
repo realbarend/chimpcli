@@ -1,5 +1,3 @@
-using System.Text.RegularExpressions;
-
 namespace Chimp;
 
 public class ChimpUpdate(ArgumentShifter args, ChimpService service)
@@ -14,10 +12,9 @@ public class ChimpUpdate(ArgumentShifter args, ChimpService service)
         var nextArg = remainingArgs.FirstOrDefault();
         if (nextArg != null)
         {
-            var projectMatch = Regex.Match(nextArg, @"^p(?<Project>\d{1,2})$");
-            if (projectMatch.Success)
+            if (Util.TryParseProjectSpec(nextArg, out var project, out var tags))
             {
-                await service.UpdateProject(line, int.Parse(projectMatch.Groups["Project"].Value));
+                await service.UpdateProject(line, project, tags);
                 return;
             }
 

@@ -1,10 +1,18 @@
 # CHANGELOG
 
-## Known issues
+## Release v1.1 (29-dec-2023)
 
-- no yet possible to use labels
+- added support for adding tags
+
+### Known issues
+
+- errors are not localized
 
 ## Release v1.0 (27-dec-2023)
+
+### Known issues
+
+- no yet possible to use labels
 
 - first release
 - timechimp login using username and password

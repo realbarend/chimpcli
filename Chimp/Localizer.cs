@@ -1,5 +1,5 @@
 using System.Globalization;
-using Chimp.Models.Api;
+using Chimp.Models;
 
 namespace Chimp;
 
@@ -24,12 +24,30 @@ public class Localizer
             _ => "TODAY"
         };
 
+    public string GetAvailableProjects() =>
+        _cliLanguage switch
+        {
+            SupportedUiLanguage.Nl => "Beschikbare projecten",
+            _ => "Available projects"
+        };
+
+    public string GetAvailableTags() =>
+        _cliLanguage switch
+        {
+            SupportedUiLanguage.Nl => "Beschikbare labels",
+            _ => "Available tags"
+        };
+
     public string GetWeekDay(DateTime date) => string.Create(CultureInfo.GetCultureInfo(_chimpLanguage), $"{date:dddd}");
     public string GetLongDate(DateTime date) => string.Create(CultureInfo.GetCultureInfo(_chimpLanguage), $"{date:D}");
 
-    public string GetTimeSheetRow(TimeSheetViewRow row) =>
-        $"{$"[{row.Line,2}] {row.TaskName} ({row.ProjectName}) p{row.ProjectLine}",-60} {row.Start?.ToLocalTime():HH:mm}-{row.End?.ToLocalTime():HH:mm} ({Util.HoursNotation(row.Hours),4}) {row.Notes}";
-    
+    public string GetTimeSheetRow(TimeSheetRowViewModel row)
+    {
+        var firstColumn = $"[{row.Line,2}] {row.ProjectName} {row.ProjectSpec}";
+        var tags = !string.IsNullOrEmpty(row.Tags) ? $" [tags: {row.Tags}]" : "";
+        return $"{firstColumn,-60} {row.Start?.ToLocalTime():HH:mm}-{row.End?.ToLocalTime():HH:mm} ({Util.HoursNotation(row.Hours),4}) {row.Notes}{tags}";
+    }
+
     public string GetDaySummary(double weekTotal, double billableTotal, string displayDay, double dayTotalHours) =>
         _cliLanguage switch
         {
