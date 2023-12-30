@@ -9,14 +9,14 @@ public class ArgumentShifter(string[] args)
         if (_pointer < args.Length) return args[_pointer++];
 
         if (defaultValue != null) return defaultValue;
-        throw new PebcakException($"cannot read '{paramName}': ran out of args");
+        throw new PebcakException("expected '{ParamName}' parameter missing", new() {{"ParamName", paramName}});
     }
 
     public int GetInt32(string paramName, string? defaultValue = null)
     {
         var str = GetString(paramName, defaultValue);
         if (int.TryParse(str, out var value)) return value;
-        throw new PebcakException($"cannot read '{paramName}': cannot parse number");
+        throw new PebcakException("parameter '{ParamName}' must be a number", new() {{"ParamName", paramName}});
     }
 
     public string[] GetRemainingArgs()

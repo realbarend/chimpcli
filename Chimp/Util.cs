@@ -82,13 +82,13 @@ public static class Util
     public static ProjectViewModel GetProjectByLine(this List<ProjectViewModel> projects, int line)
     {
         return projects.SingleOrDefault(p => p.Line == line)
-            ?? throw new PebcakException($"local cache does not contain line #{line}");
+            ?? throw new PebcakException("previously fetched projects list does not contain line #{Line}", new() {{"Line",line}});
     }
 
     public static List<long> MapTagLinesToIds(this List<TagViewModel> tags, IEnumerable<int> lines)
     {
         return lines.Select(tagLine => tags.SingleOrDefault(t => t.Line == tagLine)?.ApiTag.Id
-                                ?? throw new PebcakException($"project cache does not contain tag-line #{tagLine}"))
+                                ?? throw new PebcakException("previously fetched tags list does not contain line #{Line}", new() {{"Line", tagLine}}))
             .ToList();
     }
 }

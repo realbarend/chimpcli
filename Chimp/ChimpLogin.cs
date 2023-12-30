@@ -27,13 +27,13 @@ public class ChimpLogin(ChimpService service)
         {
             Console.Write("Enter your timechimp username: ");
             username = Console.ReadLine();
-            if (string.IsNullOrEmpty(username)) throw new PebcakException("username empty, cannot login");
+            if (string.IsNullOrEmpty(username)) throw new PebcakException("username empty: cannot login");
         }
         if (string.IsNullOrEmpty(password))
         {
             Console.Write("Enter your timechimp password: ");
             password = Console.ReadLine();
-            if (string.IsNullOrEmpty(password)) throw new PebcakException("password empty, cannot login");
+            if (string.IsNullOrEmpty(password)) throw new PebcakException("password empty: cannot login");
         }
 
         await service.DoLogin(username, password, persistCredentials);

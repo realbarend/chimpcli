@@ -9,7 +9,7 @@ public class ChimpListProjects(ChimpService service)
         var tags = await service.GetTags();
 
         Console.WriteLine();
-        Console.WriteLine($"{$"{localizer.GetAvailableProjects()}:", -60} {localizer.GetAvailableTags()}:");
+        Console.WriteLine($"{$"{localizer.TranslateLiteral("Available projects")}:", -60} {localizer.TranslateLiteral("Available tags")}:");
         for (var i = 0; i < Math.Max(projects.Count, tags.Count); i++)
         {
             var projectRow = projects.Count > i ? $"{ $"[{projects[i].Line}]",-4} {projects[i].Name}" : null;

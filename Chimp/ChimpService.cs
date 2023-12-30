@@ -1,3 +1,4 @@
+// ReSharper disable RedundantAnonymousTypePropertyName
 using System.Net.Http.Headers;
 using Chimp.Models;
 using Chimp.Models.Api;
@@ -53,34 +54,35 @@ public class ChimpService
 
         var cookie = response.GetCookie(uri, ".AspNet.ApplicationCookie");
         if (cookie?.Value == null) throw new PebcakException("login attempt failed, maybe wrong password. note: timechimp can temporarily block your account after multiple failures");
-        Console.WriteLine($"Login successful, got authtoken valid until {cookie.Expires.ToLocalTime():D}.");
 
         if (persistCredentials) { _state.LoginUserName = userName; _state.LoginPassword = password; }
         _state.AuthToken = cookie.Value;
         _state.AuthTokenExpirationDate = cookie.Expires;
         _state.User = Util.JsonDeserialize<ChimpApiUser>(await ApiCall(HttpMethod.Get, "user/current"), false);
         PersistState();
+        
+        var localizer = GetLocalizer();
+        Console.WriteLine(localizer.TranslateLiteral("Login successful, got authtoken valid until {ExpireDate}", new() {{"ExpireDate",cookie.Expires.ToLocalTime().ToString("D", localizer.ChimpCulture)}}));
     }
 
     public Localizer GetLocalizer()
     {
-        if (_state.User == null) throw new PebcakException("this action requires you login first");
-        return new Localizer(Environment.GetEnvironmentVariable("CHIMPCLI_LANGUAGE") ?? _state.User.Language);
+        return new Localizer(Environment.GetEnvironmentVariable("CHIMPCLI_LANGUAGE") ?? _state.User?.Language ?? "en");
     }
-
+    
     public async Task<List<ProjectViewModel>> GetProjects()
     {
-        if (_state.User == null) throw new PebcakException("cannot list tags without first authorizing: login first");
+        if (_state.User == null) throw new PebcakException("you must first login");
         _state.CachedProjects = null;
         return await GetProjectsCached();
     }
 
     private async Task<List<ProjectViewModel>> GetProjectsCached(bool fetchIfNotCached = true)
     {
-        if (_state.User == null) throw new PebcakException("cannot access projects without first authorizing: login first");
+        if (_state.User == null) throw new PebcakException("you must first login");
         if (_state.CachedProjects == null)
         {
-            if (!fetchIfNotCached) throw new PebcakException("need to fetch the project list first");
+            if (!fetchIfNotCached) throw new PebcakException("you must first fetch the project list");
             var projects = Util.JsonDeserialize<List<ChimpApiProject>>(await ApiCall(HttpMethod.Get, $"project/{_state.User.UserName}/uiselectbyuser"), false).OrderBy(p => p.Intern).ThenBy(p => p.Name).ToList();
             _state.CachedProjects = new List<ProjectViewModel>();
             foreach (var project in projects)
@@ -100,17 +102,17 @@ public class ChimpService
     
     public async Task<List<TagViewModel>> GetTags()
     {
-        if (_state.User == null) throw new PebcakException("cannot access tags without first authorizing: login first");
+        if (_state.User == null) throw new PebcakException("you must first login");
         _state.CachedTags = null;
         return await GetTagsCached();
     }
 
     private async Task<List<TagViewModel>> GetTagsCached(bool fetchIfNotCached = true)
     {
-        if (_state.User == null) throw new PebcakException("cannot get tags without first authorizing: login first");
+        if (_state.User == null) throw new PebcakException("you must first login");
         if (_state.CachedTags == null)
         {
-            if (!fetchIfNotCached) throw new PebcakException("need to fetch the project list first");
+            if (!fetchIfNotCached) throw new PebcakException("you must first fetch the project list");
             _state.CachedTags = Util.JsonDeserialize<List<ChimpApiTag>>(await ApiCall(HttpMethod.Get, $"tag/type%2F1"))
                 .OrderBy(t => t.Name)
                 .Select((t, idx) => new TagViewModel(idx + 1, t)).ToList();
@@ -123,7 +125,7 @@ public class ChimpService
 
     public async Task<(double WeekTotal, double BillableTotal, List<TimeSheetRowViewModel> TimeSheet)> GetTimeSheet(int? weekOffset)
     {
-        if (_state.User == null) throw new PebcakException("cannot get timesheet without first authorizing: login first");
+        if (_state.User == null) throw new PebcakException("you must first login");
         ProcessWeekOffset();
 
         var responseBody = await ApiCall(HttpMethod.Get, $"time/week/{_state.User.UserName}/{_state.TimeTravelingDate ?? DateTime.Now:yyyy-MM-dd}");
@@ -142,7 +144,7 @@ public class ChimpService
         {
             if (weekOffset != null)
             {
-                if (weekOffset is < -52 or > 52) throw new PebcakException("invalid week offset: time travel is allowed for maximum 52 weeks");
+                if (weekOffset is < -52 or > 52) throw new PebcakException("invalid weekOffset: time travel is allowed for maximum 52 weeks");
                 _state.TimeTravelingDate = weekOffset == 0 ? null : DateTime.Now.AddDays(7 * weekOffset.Value);
             }
         
@@ -156,16 +158,16 @@ public class ChimpService
 
     public TimeSheetRowViewModel GetCachedTimeSheetViewRow(int line)
     {
-        if (_state.CachedTimeSheet == null) throw new PebcakException("cannot update timesheet data without first fetching the timesheet");
+        if (_state.CachedTimeSheet == null) throw new PebcakException("you must first fetch the timesheet");
         return _state.CachedTimeSheet.SingleOrDefault(r => r.Line == line)
-               ?? throw new PebcakException($"local cache does not contain line #{line}");
+               ?? throw new PebcakException("previously fetched timesheet does not contain line #{Line}", new() {{"Line",line}});
     }
 
     public DateTime? GetTimeTravelingDate() => _state.TimeTravelingDate;
 
     public async Task AddRow(int projectLine, IEnumerable<int> tagLines, TimeInterval interval, string notes)
     {
-        if (_state.User == null) throw new PebcakException("cannot track time without first authorizing: login first");
+        if (_state.User == null) throw new PebcakException("you must first login");
 
         var projects = await GetProjectsCached(false);
         var tags = await GetTagsCached(false);

@@ -14,7 +14,7 @@ public class ChimpListTimeSheet(ChimpService service)
         foreach (var date in rows.GroupBy(r => r.Date.Date).Select((a, _) => a.Key).OrderBy(d => d))
         {
             var displayDay = date == DateTime.Today
-                ? localizer.GetToday()
+                ? localizer.TranslateLiteral("TODAY")
                 : isTimeTraveling
                     ? localizer.GetLongDate(date)
                     : localizer.GetWeekDay(date); 

@@ -4,7 +4,7 @@ public class ChimpUpdate(ArgumentShifter args, ChimpService service)
 {
     public async Task Run()
     {
-        var line = args.GetInt32("line");
+        var line = args.GetInt32("line#");
         var baseDate = service.GetCachedTimeSheetViewRow(line).Date;
 
         // args parsing is a bit of a hassle because the next arg may be the first word of the 'notes' parameter
@@ -20,7 +20,7 @@ public class ChimpUpdate(ArgumentShifter args, ChimpService service)
 
             try
             {
-                var interval = new TimeInterval(nextArg, baseDate, service.GetLocalizer());
+                var interval = new TimeInterval(nextArg, baseDate, service.GetLocalizer().ChimpCulture);
                 await service.UpdateTimeInterval(line, interval);
                 return;
             }

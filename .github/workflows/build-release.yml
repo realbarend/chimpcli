@@ -40,7 +40,7 @@ jobs:
         with:
           name: publish-result
           path: |
-            CHANGELOG.md
+            CHANGELOG-RELEASE.md
             out
           retention-days: 3
   release:
@@ -66,7 +66,7 @@ jobs:
           draft: false
           prerelease: false
           tag_name: ${{ github.ref }}
-          body_path: CHANGELOG.md
+          body_path: CHANGELOG-RELEASE.md
           files: |
             out/chimp-win-x64-${{ env.RELEASE_VERSION }}.zip
             out/chimp-osx-x64-${{ env.RELEASE_VERSION }}.tar.gz
