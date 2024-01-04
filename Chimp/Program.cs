@@ -1,4 +1,7 @@
-﻿using Chimp;
+﻿using System.Text;
+using Chimp;
+
+Console.OutputEncoding = Encoding.Unicode;
 
 var stateFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".chimpcli");
 var service = new ChimpService(stateFilePath);
@@ -53,7 +56,7 @@ try
 catch (LocalizedException le)
 {
     var localizer = service.GetLocalizer();
-    Console.Error.WriteLine($"{le.GetType().Name}: {localizer.TranslateLiteral(le.Message, le.Args)}");
+    Console.Error.WriteLine(localizer.TranslateLiteral(le.Message, le.Args));
     Console.Error.WriteLine(le.StackTrace);
     Console.Error.WriteLine();
     Console.Error.WriteLine(localizer.TranslateLiteral("try 'chimp help' to get help"));

@@ -151,7 +151,9 @@ public class Localizer
     {
         var firstColumn = $"[{row.Line,2}] {row.ProjectName} {row.ProjectSpec}";
         var tags = !string.IsNullOrEmpty(row.Tags) ? $" [tags: {row.Tags}]" : "";
-        return $"{firstColumn,-60} {row.Start?.ToLocalTime():HH:mm}-{row.End?.ToLocalTime():HH:mm} ({Util.HoursNotation(row.Hours),4}) {row.Notes}{tags}";
+        // wow I did not expect the ancient 'backspace trick' would work here LOL
+        var warnIcon = string.IsNullOrWhiteSpace(row.Notes) ? "\x8\x8\u26a0 " : "";
+        return $"{firstColumn,-60} {warnIcon}{row.Start?.ToLocalTime():HH:mm}-{row.End?.ToLocalTime():HH:mm} ({Util.HoursNotation(row.Hours),4}) {row.Notes}{tags}";
     }
 
     public string GetDaySummary(double weekTotal, double billableTotal, string displayDay, double dayTotalHours) =>

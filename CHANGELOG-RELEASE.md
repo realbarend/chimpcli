@@ -1,9 +1,7 @@
 # CHANGELOG
 
-## Release v1.2 (30-dec-2023)
+## Release v1.3 (tbd)
 
-- localized and improved most messages
-- English fallback for weekday prefix
-- no known issues
+- display warning-icon if notes are missing
 
 OEF
