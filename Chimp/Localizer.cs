@@ -159,8 +159,8 @@ public class Localizer
     public string GetDaySummary(double weekTotal, double billableTotal, string displayDay, double dayTotalHours) =>
         _cliLanguage switch
         {
-            SupportedUiLanguage.Nl => $"{$"DEZE WEEK {weekTotal} uren waarvan {billableTotal} facturabel",-60} {displayDay} {dayTotalHours} uren",
-            _ => $"{$"CURRENT WEEK {weekTotal} hours of which {billableTotal} billable",-60} {displayDay} {dayTotalHours} hours"
+            SupportedUiLanguage.Nl => $"{$"DEZE WEEK {Util.HoursNotation(weekTotal)} uren waarvan {Util.HoursNotation(billableTotal)} facturabel",-60} {displayDay} {Util.HoursNotation(dayTotalHours)} uren",
+            _ => $"{$"CURRENT WEEK {Util.HoursNotation(weekTotal)} hours of which {Util.HoursNotation(billableTotal)} billable",-60} {displayDay} {Util.HoursNotation(dayTotalHours)} hours"
         };
 
     public string GetTimeTravelerAlert(int weeks) =>

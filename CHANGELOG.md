@@ -3,6 +3,7 @@
 ## Release v1.3 (tbd)
 
 - display warning-icon if notes are missing
+- use hours-notation in day-summary
 
 ## Release v1.2 (30-dec-2023)
 
