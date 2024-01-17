@@ -56,7 +56,7 @@ try
 catch (LocalizedException le)
 {
     var localizer = service.GetLocalizer();
-    Console.Error.WriteLine(localizer.TranslateLiteral(le.Message, le.Args));
+    Console.Error.WriteLine($"Error: {localizer.TranslateLiteral(le.Message, le.Args)}");
     Console.Error.WriteLine(le.StackTrace);
     Console.Error.WriteLine();
     Console.Error.WriteLine(localizer.TranslateLiteral("try 'chimp help' to get help"));

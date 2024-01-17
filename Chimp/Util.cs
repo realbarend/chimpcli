@@ -73,7 +73,14 @@ public static class Util
     public static Cookie? GetCookie(this HttpResponseMessage response, Uri uri, string cookieName)
     {
         var cookies = new CookieContainer();
-        foreach (var cookieHeader in response.Headers.GetValues("Set-Cookie")) cookies.SetCookies(uri, cookieHeader);
+        foreach (var cookieHeader in response.Headers.GetValues("Set-Cookie"))
+        {
+            try
+            {
+                cookies.SetCookies(uri, cookieHeader);
+            }
+            catch (CookieException) { /* this happens when the cookieheader is not valid */ }
+        }
         return cookies.GetCookies(uri).FirstOrDefault(c => c.Name == cookieName);
     }
     
