@@ -113,8 +113,8 @@ public class Localizer
             "hour '{Hour}' is invalid" when _cliLanguage == SupportedUiLanguage.Nl => "uur '{Hour}' is ongeldig",
             "invalid projectSpec '{ProjectSpec}', use pNN or pNN-A,B" when _cliLanguage == SupportedUiLanguage.Nl => "ongeldige projectSpec '{ProjectSpec}', gebruik pNN of pNN-A,B",
             "invalid weekOffset: time travel is allowed for maximum 52 weeks" when _cliLanguage == SupportedUiLanguage.Nl => "ongeldige weekOffset: tijdreizen kan maximaal tot 52 weken",
-            "login attempt failed, maybe wrong password. note: timechimp can temporarily block your account after multiple failures" when _cliLanguage == SupportedUiLanguage.Nl => "inlogpoging mislukt, misschien verkeerd wachtwoord. letop: timechimp kan bij meerdere inlogfouten tijdelijk je account blokkeren",
-            "Login successful, got authtoken valid until {ExpireDate}" when _cliLanguage == SupportedUiLanguage.Nl => "Successvol ingelogd, kreeg authtoken geldig tot {ExpireDate}",
+            "login attempt failed, maybe wrong password. note: timechimp can temporarily block your account after multiple failures ({Message})" when _cliLanguage == SupportedUiLanguage.Nl => "inlogpoging mislukt, misschien verkeerd wachtwoord. letop: timechimp kan bij meerdere inlogfouten tijdelijk je account blokkeren",
+            "** login successful, got accesstoken valid until {ExpireDate}, will automatically refresh using refreshtoken" when _cliLanguage == SupportedUiLanguage.Nl => "** successvol ingelogd, kreeg accesstoken geldig tot {ExpireDate}, zal automatisch vernieuwen met refreshtoken",
             "minute '{Minute}' is invalid" when _cliLanguage == SupportedUiLanguage.Nl => "minuut '{Minute}' is ongeldig",
             "Not removed." when _cliLanguage == SupportedUiLanguage.Nl => "Niet verwijderd.",
             "parameter '{ParamName}' must be a number" when _cliLanguage == SupportedUiLanguage.Nl => "parameter '{ParamName}' moet een getal zijn",
@@ -151,8 +151,7 @@ public class Localizer
     {
         var firstColumn = $"[{row.Line,2}] {row.ProjectName} {row.ProjectSpec}";
         var tags = !string.IsNullOrEmpty(row.Tags) ? $" [tags: {row.Tags}]" : "";
-        // wow I did not expect the ancient 'backspace trick' would work here LOL
-        var warnIcon = string.IsNullOrWhiteSpace(row.Notes) ? "\x8\x8\u26a0 " : "";
+        var warnIcon = string.IsNullOrWhiteSpace(row.Notes) ? "\b\b\u26a0 " : "";
         return $"{firstColumn,-60} {warnIcon}{row.Start?.ToLocalTime():HH:mm}-{row.End?.ToLocalTime():HH:mm} ({Util.HoursNotation(row.Hours),4}) {row.Notes}{tags}";
     }
 

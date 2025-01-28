@@ -11,7 +11,7 @@ public class ChimpLogin(ChimpService service)
         if (!string.IsNullOrEmpty(username)) Console.WriteLine("Reading your timechimp username from env.CHIMPCLI_USERNAME");
         var password = Environment.GetEnvironmentVariable("CHIMPCLI_PASSWORD");
         if (!string.IsNullOrEmpty(password)) Console.WriteLine("Reading your timechimp password from env.CHIMPCLI_PASSWORD");
-        
+
         // if credentials were passed via ENV, then we prefer to use those for login
         if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(password))
         {

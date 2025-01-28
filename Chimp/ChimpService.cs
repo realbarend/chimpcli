@@ -9,7 +9,7 @@ public class ChimpService
 {
     private readonly string _stateFilePath;
     private readonly StateData _state = new();
-    
+
     public ChimpService(string stateFilePath)
     {
         _stateFilePath = stateFilePath;
@@ -26,50 +26,52 @@ public class ChimpService
 
     public async Task<bool> DoLoginIfPersistedCredentials()
     {
-        if (_state.LoginUserName == null || _state.LoginPassword == null) return false;
+        if (_state.Auth?.LoginPassword == null) return false;
         Console.WriteLine($"Logging in using previously persisted credentials");
         try
         {
-            await DoLogin(_state.LoginUserName, _state.LoginPassword, true);
+            await DoLogin(_state.Auth.LoginUserName, _state.Auth.LoginPassword, true);
+            return true;
         }
         catch
         {
-            Console.WriteLine("** removing your persisted credentials because of failed login");
-            _state.LoginUserName = null;
-            _state.LoginPassword = null;
-            PersistState();
+            Console.WriteLine("** login using persisted credentials failed!");
             throw;
         }
-        return true;
     }
 
     public async Task DoLogin(string userName, string password, bool persistCredentials)
     {
-        var uri = new Uri("https://app.timechimp.com/account/login?ReturnUrl=%2F");
-        var response = await new HttpClient().PostAsync(uri, new FormUrlEncodedContent(new Dictionary<string, string>  
-        {  
-            { "UserName", userName}, { "Password", password}, { "RememberMe", "true"},
-        }));
-        if (!response.IsSuccessStatusCode) throw new ApiException($"login failed: got httpcode {response.StatusCode}");
+        try
+        {
+            var authResult = await AuthHelper.Login(userName, password);
+            _state.Auth = new AuthProperties
+            {
+                LoginUserName = userName,
+                LoginPassword = persistCredentials ? password : null,
+                CognitoUserPoolId = authResult.Environment.UserPoolId,
+                CognitoClientId = authResult.Environment.ClientId,
+                AccessToken = authResult.AccessToken,
+                Expires = authResult.Expires,
+                RefreshToken = authResult.RefreshToken,
+            };
+        }
+        catch (Exception e) // Amazon.CognitoIdentityProvider.Model.NotAuthorizedException: Incorrect username or password
+        {
+            throw new PebcakException("login attempt failed, maybe wrong password. note: timechimp can temporarily block your account after multiple failures ({Message})", new() {{"Message", e.Message}});
+        }
 
-        var cookie = response.GetCookie(uri, ".AspNet.ApplicationCookie");
-        if (cookie?.Value == null) throw new PebcakException("login attempt failed, maybe wrong password. note: timechimp can temporarily block your account after multiple failures");
-
-        if (persistCredentials) { _state.LoginUserName = userName; _state.LoginPassword = password; }
-        _state.AuthToken = cookie.Value;
-        _state.AuthTokenExpirationDate = cookie.Expires;
         _state.User = Util.JsonDeserialize<ChimpApiUser>(await ApiCall(HttpMethod.Get, "user/current"), false);
         PersistState();
-        
         var localizer = GetLocalizer();
-        Console.WriteLine(localizer.TranslateLiteral("Login successful, got authtoken valid until {ExpireDate}", new() {{"ExpireDate",cookie.Expires.ToLocalTime().ToString("D", localizer.ChimpCulture)}}));
+        Console.WriteLine(localizer.TranslateLiteral("** login successful, got accesstoken valid until {ExpireDate}, will automatically refresh using refreshtoken", new() {{"ExpireDate",_state.Auth.Expires.ToLocalTime().ToString("D", localizer.ChimpCulture)}}));
     }
 
     public Localizer GetLocalizer()
     {
         return new Localizer(Environment.GetEnvironmentVariable("CHIMPCLI_LANGUAGE") ?? _state.User?.Language ?? "en");
     }
-    
+
     public async Task<List<ProjectViewModel>> GetProjects()
     {
         if (_state.User == null) throw new PebcakException("you must first login");
@@ -99,7 +101,7 @@ public class ChimpService
 
         return _state.CachedProjects;
     }
-    
+
     public async Task<List<TagViewModel>> GetTags()
     {
         if (_state.User == null) throw new PebcakException("you must first login");
@@ -147,7 +149,7 @@ public class ChimpService
                 if (weekOffset is < -52 or > 52) throw new PebcakException("invalid weekOffset: time travel is allowed for maximum 52 weeks");
                 _state.TimeTravelingDate = weekOffset == 0 ? null : DateTime.Now.AddDays(7 * weekOffset.Value);
             }
-        
+
             if (_state.TimeTravelingDate != null && Util.GetFirstDayOfWeek(_state.TimeTravelingDate.Value) == Util.GetFirstDayOfWeek(DateTime.Today))
             {
                 // user was previously time traveling, but appears to have arrived in current time, so we can reset
@@ -189,7 +191,7 @@ public class ChimpService
             Notes = notes,
         });
     }
-    
+
     public async Task UpdateNotes(int line, string notes)
     {
         await ApiCall(HttpMethod.Put, "time/put", GetCachedTimeSheetViewRow(line).ApiTimeSheetRecord with
@@ -198,7 +200,7 @@ public class ChimpService
             Modified = DateTime.Now,
         });
     }
-    
+
     public async Task UpdateTimeInterval(int line, TimeInterval interval)
     {
         await ApiCall(HttpMethod.Put, "time/put", GetCachedTimeSheetViewRow(line).ApiTimeSheetRecord with
@@ -211,7 +213,7 @@ public class ChimpService
             Modified = DateTime.Now,
         });
     }
-    
+
     public async Task UpdateProject(int line, int projectLine, IEnumerable<int> tagLines)
     {
         var projects = await GetProjectsCached(false);
@@ -228,7 +230,7 @@ public class ChimpService
             Modified = DateTime.Now,
         });
     }
-    
+
     public async Task DeleteRow(int line)
     {
         var existingRecord = GetCachedTimeSheetViewRow(line).ApiTimeSheetRecord;
@@ -240,21 +242,32 @@ public class ChimpService
 
     private async Task<string> ApiCall(HttpMethod method, string path, object? data = null)
     {
-        if (_state.AuthToken == null) throw new ApplicationException("attempting to call api with no authtoken");
-        
+        if (_state.Auth == null) throw new ApplicationException("attempted to call api with no authtoken");
+        await CheckRefreshToken();
+
         using var request = new HttpRequestMessage(method, path);
         request.Headers.Add("Accept", "application/json");
-        request.Headers.Add("Cookie", $".AspNet.ApplicationCookie={_state.AuthToken}");
-        if (data != null)
-        {
-            request.Content = new StringContent(Util.JsonSerialize(data), new MediaTypeHeaderValue("application/json"));
-        }
-
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _state.Auth.AccessToken);
+        if (data != null) request.Content = new StringContent(Util.JsonSerialize(data), new MediaTypeHeaderValue("application/json"));
         var client = new HttpClient { BaseAddress = new Uri("https://app.timechimp.com/api/") };
         var response = await client.SendAsync(request);
         if (!response.IsSuccessStatusCode) throw new ApiException($"got httpcode {response.StatusCode}: maybe need to re-authorize");
         var bodyString = await response.Content.ReadAsStringAsync();
         if (bodyString.TrimStart().StartsWith('<')) throw new ApiException($"api returned html: probably need to re-authorize");
         return bodyString;
+    }
+
+    private async Task CheckRefreshToken()
+    {
+        if (_state.Auth == null || _state.Auth.Expires > DateTimeOffset.UtcNow.AddSeconds(60)) return;
+
+        var newAuth = await AuthHelper.TryRefresh(_state.Auth);
+        if (newAuth == null) return;
+
+        _state.Auth.AccessToken = newAuth.AccessToken;
+        _state.Auth.Expires = newAuth.Expires;
+        _state.Auth.RefreshToken = newAuth.RefreshToken;
+        PersistState();
+        Console.WriteLine($"** refresh: got new accesstoken valid until {_state.Auth.Expires.ToLocalTime()}");
     }
 }

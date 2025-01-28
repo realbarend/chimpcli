@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## Release v1.4 (28-jan-2024)
+
+- **fix**: addressed some minor api changes
+- changed login flow to use cognito authentication
+
 ## Release v1.3 (17-jan-2024)
 
 - display warning-icon if notes are missing
@@ -34,5 +39,3 @@
 - add, edit, delete tracked hours
 - auto-generate binaries in github ci
 - language support for English and Dutch (after login)
-
-OEF

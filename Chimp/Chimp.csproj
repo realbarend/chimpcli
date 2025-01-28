@@ -12,6 +12,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Amazon.Extensions.CognitoAuthentication" Version="2.5.4" />
+      <PackageReference Include="AWSSDK.CognitoIdentityProvider" Version="3.7.306.3" />
       <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
     </ItemGroup>
 
