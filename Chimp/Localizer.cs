@@ -10,7 +10,7 @@ public class Localizer
 {
     private readonly SupportedUiLanguage _cliLanguage;
     public CultureInfo ChimpCulture { get; }
-    
+
     public Localizer(string chimpLanguage)
     {
         if (!Enum.TryParse<SupportedUiLanguage>(chimpLanguage, true, out var uiLanguage)) uiLanguage = SupportedUiLanguage.En;
@@ -140,7 +140,7 @@ public class Localizer
 #endif
         };
         return args != null ? Interpolate(translated) : translated;
-        
+
         string Interpolate(string s) => Regex.Replace(s, @"{([^}]+)}", match => args.TryGetValue(match.Groups[1].Value, out var value) ? value.ToString() ?? string.Empty : match.Value);
     }
 

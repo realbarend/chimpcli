@@ -85,7 +85,7 @@ public class ChimpService
         if (_state.CachedProjects == null)
         {
             if (!fetchIfNotCached) throw new PebcakException("you must first fetch the project list");
-            var projects = Util.JsonDeserialize<List<ChimpApiProject>>(await ApiCall(HttpMethod.Get, $"project/{_state.User.UserName}/uiselectbyuser"), false).OrderBy(p => p.Intern).ThenBy(p => p.Name).ToList();
+            var projects = Util.JsonDeserialize<List<ChimpApiProject>>(await ApiCall(HttpMethod.Get, $"project/{_state.User.Id}/uiselectbyuser"), false).OrderBy(p => p.Intern).ThenBy(p => p.Name).ToList();
             _state.CachedProjects = new List<ProjectViewModel>();
             foreach (var project in projects)
             {
@@ -130,7 +130,7 @@ public class ChimpService
         if (_state.User == null) throw new PebcakException("you must first login");
         ProcessWeekOffset();
 
-        var responseBody = await ApiCall(HttpMethod.Get, $"time/week/{_state.User.UserName}/{_state.TimeTravelingDate ?? DateTime.Now:yyyy-MM-dd}");
+        var responseBody = await ApiCall(HttpMethod.Get, $"time/week/{_state.User.Id}/{_state.TimeTravelingDate ?? DateTime.Now:yyyy-MM-dd}");
         var data = Util.JsonDeserialize<List<ChimpApiTimeSheetRecord>>(responseBody);
 
         var projects = await GetProjectsCached();
@@ -194,7 +194,8 @@ public class ChimpService
 
     public async Task UpdateNotes(int line, string notes)
     {
-        await ApiCall(HttpMethod.Put, "time/put", GetCachedTimeSheetViewRow(line).ApiTimeSheetRecord with
+        var existingRecord = GetCachedTimeSheetViewRow(line).ApiTimeSheetRecord;
+        await ApiCall(HttpMethod.Put, $"time/{existingRecord.Id}", existingRecord with
         {
             Notes = notes,
             Modified = DateTime.Now,
@@ -203,7 +204,8 @@ public class ChimpService
 
     public async Task UpdateTimeInterval(int line, TimeInterval interval)
     {
-        await ApiCall(HttpMethod.Put, "time/put", GetCachedTimeSheetViewRow(line).ApiTimeSheetRecord with
+        var existingRecord = GetCachedTimeSheetViewRow(line).ApiTimeSheetRecord;
+        await ApiCall(HttpMethod.Put, $"time/{existingRecord.Id}", existingRecord with
         {
             Date = interval.Start,
             Start = interval.Start,
@@ -221,7 +223,8 @@ public class ChimpService
         var project = projects.GetProjectByLine(projectLine);
         var tagIds = tags.MapTagLinesToIds(tagLines);
 
-        await ApiCall(HttpMethod.Put, "time/put", GetCachedTimeSheetViewRow(line).ApiTimeSheetRecord with
+        var existingRecord = GetCachedTimeSheetViewRow(line).ApiTimeSheetRecord;
+        await ApiCall(HttpMethod.Put, $"time/{existingRecord.Id}", existingRecord with
         {
             CustomerId = project.ApiProject.CustomerId,
             ProjectId = project.ApiProject.Id,
@@ -234,7 +237,7 @@ public class ChimpService
     public async Task DeleteRow(int line)
     {
         var existingRecord = GetCachedTimeSheetViewRow(line).ApiTimeSheetRecord;
-        await ApiCall(HttpMethod.Delete, $"time/delete?id={existingRecord.Id}", Array.Empty<int>());
+        await ApiCall(HttpMethod.Delete, $"time/{existingRecord.Id}", Array.Empty<int>());
     }
 
     private void PersistState() => ProtectedFileHelper.WriteProtectedFile(_stateFilePath, Util.JsonSerialize(_state));
@@ -249,9 +252,9 @@ public class ChimpService
         request.Headers.Add("Accept", "application/json");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _state.Auth.AccessToken);
         if (data != null) request.Content = new StringContent(Util.JsonSerialize(data), new MediaTypeHeaderValue("application/json"));
-        var client = new HttpClient { BaseAddress = new Uri("https://app.timechimp.com/api/") };
+        var client = new HttpClient { BaseAddress = new Uri("https://web.timechimp.com/api/") };
         var response = await client.SendAsync(request);
-        if (!response.IsSuccessStatusCode) throw new ApiException($"got httpcode {response.StatusCode}: maybe need to re-authorize");
+        if (!response.IsSuccessStatusCode) throw new ApiException($"got httpcode {(int)response.StatusCode} ({response.StatusCode}): maybe need to re-authorize");
         var bodyString = await response.Content.ReadAsStringAsync();
         if (bodyString.TrimStart().StartsWith('<')) throw new ApiException($"api returned html: probably need to re-authorize");
         return bodyString;
