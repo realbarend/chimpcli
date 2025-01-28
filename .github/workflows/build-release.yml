@@ -16,6 +16,10 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
+      - name: manually install dotnet 9 because github currently does not have this by default
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
       - name: test
         # let's pretend we wrote any automated tests
         run: dotnet test
@@ -23,18 +27,18 @@ jobs:
         run: |
           dotnet msbuild -t:PublishAllRids -p:Configuration=Release -p:SelfContained=false
           mkdir -p out
-          zip -j out/chimp-win-x64.zip Chimp/bin/Release/net8.0/win-x64/publish/chimp.exe CHANGELOG.md README.md
-          tar czf out/chimp-osx-x64.tar.gz -C Chimp/bin/Release/net8.0/osx-x64/publish chimp ../../../../../../CHANGELOG.md ../../../../../../README.md
-          tar czf out/chimp-linux-x64.tar.gz -C Chimp/bin/Release/net8.0/linux-x64/publish chimp ../../../../../../CHANGELOG.md ../../../../../../README.md
+          zip -j out/chimp-win-x64.zip Chimp/bin/Release/net9.0/win-x64/publish/chimp.exe CHANGELOG.md README.md
+          tar czf out/chimp-osx-x64.tar.gz -C Chimp/bin/Release/net9.0/osx-x64/publish chimp ../../../../../../CHANGELOG.md ../../../../../../README.md
+          tar czf out/chimp-linux-x64.tar.gz -C Chimp/bin/Release/net9.0/linux-x64/publish chimp ../../../../../../CHANGELOG.md ../../../../../../README.md
       - name: publish self-contained executables
         # disabled for the time being because it uses a lot of github storage
         if: false
         run: |
           dotnet msbuild -t:PublishAllRids -p:Configuration=Release -p:SelfContained=true
           mkdir -p out
-          zip -j out/chimp-win-x64-selfcontained.zip Chimp/bin/Release/net8.0/win-x64/publish/chimp.exe CHANGELOG.md README.md
-          tar czf out/chimp-osx-x64-selfcontained.tar.gz -C Chimp/bin/Release/net8.0/osx-x64/publish chimp ../../../../../../CHANGELOG.md ../../../../../../README.md
-          tar czf out/chimp-linux-x64-selfcontained.tar.gz -C Chimp/bin/Release/net8.0/linux-x64/publish chimp ../../../../../../CHANGELOG.md ../../../../../../README.md
+          zip -j out/chimp-win-x64-selfcontained.zip Chimp/bin/Release/net9.0/win-x64/publish/chimp.exe CHANGELOG.md README.md
+          tar czf out/chimp-osx-x64-selfcontained.tar.gz -C Chimp/bin/Release/net9.0/osx-x64/publish chimp ../../../../../../CHANGELOG.md ../../../../../../README.md
+          tar czf out/chimp-linux-x64-selfcontained.tar.gz -C Chimp/bin/Release/net9.0/linux-x64/publish chimp ../../../../../../CHANGELOG.md ../../../../../../README.md
       - name: upload publish artifacts
         uses: actions/upload-artifact@v4
         with:
