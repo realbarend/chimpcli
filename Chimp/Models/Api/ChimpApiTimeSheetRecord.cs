@@ -12,6 +12,7 @@ public record ChimpApiTimeSheetRecord(
     string StartEnd,
     string StopTime,
     long Status,
+    long ViewStatus,
     string Notes,
 
     string Timer,
