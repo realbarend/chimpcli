@@ -24,7 +24,7 @@ public static class AuthHelper
     {
         try
         {
-            var enviroment = new CognitoEnvironment(auth.CognitoClientId, auth.CognitoUserPoolId);
+            var enviroment = new CognitoEnvironment(auth.CognitoUserPoolId, auth.CognitoClientId);
             using var provider = CreateIdentityProviderClient(enviroment);
             var userPool = new CognitoUserPool(auth.CognitoUserPoolId, auth.CognitoClientId, provider);
             var user = new CognitoUser(auth.LoginUserName, auth.CognitoClientId, userPool, provider) {
