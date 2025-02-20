@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using Chimp;
 
-Console.OutputEncoding = Encoding.Unicode;
+Console.OutputEncoding = Encoding.UTF8;
 
 var stateFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".chimpcli");
 var service = new ChimpService(stateFilePath);
