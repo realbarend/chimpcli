@@ -80,7 +80,7 @@ public static class AuthHelper
     {
         public static AuthResult FromAuthenticationResultType(AuthenticationResultType auth, CognitoEnvironment environment)
         {
-            return new AuthResult(auth.AccessToken, DateTimeOffset.UtcNow.AddSeconds(auth.ExpiresIn), auth.RefreshToken, environment);
+            return new AuthResult(auth.AccessToken, DateTimeOffset.UtcNow.AddSeconds(auth.ExpiresIn ?? 0), auth.RefreshToken, environment);
         }
     }
 }
