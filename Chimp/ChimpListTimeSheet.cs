@@ -17,16 +17,16 @@ public class ChimpListTimeSheet(IChimpService service)
                 ? localizer.TranslateLiteral("TODAY")
                 : isTimeTraveling
                     ? localizer.GetLongDate(date)
-                    : localizer.GetWeekDay(date); 
+                    : localizer.GetWeekDay(date);
             Console.WriteLine();
             Console.WriteLine($"{displayDay.ToUpperInvariant()} =============================================================================");
 
-            var previousRow = (TimeSheetRowViewModel?)null;
+            TimeSheetRowViewModel? previousRow = null;
             var dayRows = rows.Where(r => r.Date.Date == date).ToList();
             foreach (var row in dayRows.OrderBy(d => d.Start))
             {
                 if (previousRow != null && previousRow.End != row.Start) Console.WriteLine("--gap--");
-                Console.WriteLine(localizer.GetTimeSheetRow(row));
+                Console.WriteLine(Localizer.GetTimeSheetRow(row));
                 previousRow = row;
             }
 

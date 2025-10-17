@@ -7,7 +7,7 @@ public class ChimpDelete(ArgumentShifter args, IChimpService service)
         var line = args.GetInt32("line#");
 
         var localizer = service.GetLocalizer();
-        Console.WriteLine(localizer.GetTimeSheetRow(service.GetCachedTimeSheetViewRow(line)));
+        Console.WriteLine(Localizer.GetTimeSheetRow(service.GetCachedTimeSheetViewRow(line)));
         Console.WriteLine(localizer.TranslateLiteral("About to delete row #{Line}: are you sure? Y/N", new() { { "Line", line } }));
         if (Console.ReadKey(true).Key != localizer.GetYesKey())
         {

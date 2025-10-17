@@ -1,3 +1,4 @@
+using System.Globalization;
 using Chimp.Models.Api;
 
 namespace Chimp.Models;
@@ -37,11 +38,11 @@ public record TimeSheetRowViewModel(
     private static string GetProjectSpec(ChimpApiTimeSheetRecord apiTimeSheetRecord, List<ProjectViewModel> projects, List<TagViewModel> tags)
     {
         var mappedProject = projects.SingleOrDefault(p => p.ApiProjectTask.Id == apiTimeSheetRecord.ProjectTaskId);
-        var projectSpec = "p" + (mappedProject != null ? mappedProject.Line.ToString() : "?");
+        var projectSpec = "p" + (mappedProject != null ? mappedProject.Line.ToString(CultureInfo.InvariantCulture) : "?");
         if (apiTimeSheetRecord.Tags?.Count > 0) projectSpec += "-" + string.Join(",", apiTimeSheetRecord.Tags.Select(apiTag =>
         {
             var mappedTag = tags.SingleOrDefault(t => t.ApiTag.Id == apiTag.Id);
-            return mappedTag != null ? mappedTag.Line.ToString() : "?";
+            return mappedTag != null ? mappedTag.Line.ToString(CultureInfo.InvariantCulture) : "?";
         }));
         return projectSpec;
     }

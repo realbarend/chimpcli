@@ -27,7 +27,7 @@ public class ChimpService : IChimpService
     public async Task<bool> DoLoginIfPersistedCredentials()
     {
         if (_state.Auth?.LoginPassword == null) return false;
-        Console.WriteLine($"Logging in using previously persisted credentials");
+        Console.WriteLine("Logging in using previously persisted credentials");
         try
         {
             await DoLogin(_state.Auth.LoginUserName, _state.Auth.LoginPassword, true);
@@ -86,7 +86,7 @@ public class ChimpService : IChimpService
         {
             if (!fetchIfNotCached) throw new PebcakException("you must first fetch the project list");
             var projects = Util.JsonDeserialize<List<ChimpApiProject>>(await ApiCall(HttpMethod.Get, $"project/{_state.User.Id}/uiselectbyuser"), false).OrderBy(p => p.Intern).ThenBy(p => p.Name).ToList();
-            _state.CachedProjects = new List<ProjectViewModel>();
+            _state.CachedProjects = [];
             foreach (var project in projects)
             {
                 foreach (var task in Util.JsonDeserialize<List<ChimpApiProjectTask>>(
@@ -115,7 +115,7 @@ public class ChimpService : IChimpService
         if (_state.CachedTags == null)
         {
             if (!fetchIfNotCached) throw new PebcakException("you must first fetch the project list");
-            _state.CachedTags = Util.JsonDeserialize<List<ChimpApiTag>>(await ApiCall(HttpMethod.Get, $"tag/type%2F1"))
+            _state.CachedTags = Util.JsonDeserialize<List<ChimpApiTag>>(await ApiCall(HttpMethod.Get, "tag/type%2F1"))
                 .OrderBy(t => t.Name)
                 .Select((t, idx) => new TagViewModel(idx + 1, t)).ToList();
 
@@ -256,7 +256,7 @@ public class ChimpService : IChimpService
         var response = await client.SendAsync(request);
         if (!response.IsSuccessStatusCode) throw new ApiException($"got httpcode {(int)response.StatusCode} ({response.StatusCode}): maybe need to re-authorize");
         var bodyString = await response.Content.ReadAsStringAsync();
-        if (bodyString.TrimStart().StartsWith('<')) throw new ApiException($"api returned html: probably need to re-authorize");
+        if (bodyString.TrimStart().StartsWith('<')) throw new ApiException("api returned html: probably need to re-authorize");
         return bodyString;
     }
 

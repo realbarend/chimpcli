@@ -97,7 +97,7 @@ public class Localizer
             chimp u 5 fr:930-10                        # move record 5 to 'Friday' and change the time to 9.30-10.00
             chimp update 5 p2-3,5                      # change the project number for record 5 to '2' and also set tag numbers '3' and '5'
             chimp del 5                                # make the fifth record be gone (will ask for confirmation)
-            """
+            """,
     };
 
     public string TranslateLiteral(string literal, Dictionary<string, object>? args = null)
@@ -141,13 +141,13 @@ public class Localizer
         };
         return args != null ? Interpolate(translated) : translated;
 
-        string Interpolate(string s) => Regex.Replace(s, @"{([^}]+)}", match => args.TryGetValue(match.Groups[1].Value, out var value) ? value.ToString() ?? string.Empty : match.Value);
+        string Interpolate(string s) => Regex.Replace(s, "{([^}]+)}", match => args.TryGetValue(match.Groups[1].Value, out var value) ? value.ToString() ?? string.Empty : match.Value);
     }
 
     public string GetWeekDay(DateTime date) => string.Create(ChimpCulture, $"{date:dddd}");
     public string GetLongDate(DateTime date) => string.Create(ChimpCulture, $"{date:D}");
 
-    public string GetTimeSheetRow(TimeSheetRowViewModel row)
+    public static string GetTimeSheetRow(TimeSheetRowViewModel row)
     {
         var firstColumn = $"[{row.Line,2}] {row.ProjectName} {row.ProjectSpec}";
         var tags = !string.IsNullOrEmpty(row.Tags) ? $" [tags: {row.Tags}]" : "";
@@ -159,20 +159,20 @@ public class Localizer
         _cliLanguage switch
         {
             SupportedUiLanguage.Nl => $"{$"DEZE WEEK {Util.HoursNotation(weekTotal)} uren waarvan {Util.HoursNotation(billableTotal)} facturabel",-60} {displayDay} {Util.HoursNotation(dayTotalHours)} uren",
-            _ => $"{$"CURRENT WEEK {Util.HoursNotation(weekTotal)} hours of which {Util.HoursNotation(billableTotal)} billable",-60} {displayDay} {Util.HoursNotation(dayTotalHours)} hours"
+            _ => $"{$"CURRENT WEEK {Util.HoursNotation(weekTotal)} hours of which {Util.HoursNotation(billableTotal)} billable",-60} {displayDay} {Util.HoursNotation(dayTotalHours)} hours",
         };
 
     public string GetTimeTravelerAlert(int weeks) =>
         _cliLanguage switch
         {
             SupportedUiLanguage.Nl => $"** TIJDREIZIGER ALARM  ---  je bevindt je op dit moment {Math.Abs(weeks)} {(Math.Abs(weeks) < 2 ? "week" : "weken")} {(weeks < 0 ? "achter op" : "vooruit op").ToUpperInvariant()} normale tijd **",
-            _ => $"** TIME TRAVELER ALERT  ---  you are currently {Math.Abs(weeks)} {(Math.Abs(weeks) < 2 ? "week" : "weeks")} {(weeks < 0 ? "behind" : "ahead of").ToUpperInvariant()} normal time **"
+            _ => $"** TIME TRAVELER ALERT  ---  you are currently {Math.Abs(weeks)} {(Math.Abs(weeks) < 2 ? "week" : "weeks")} {(weeks < 0 ? "behind" : "ahead of").ToUpperInvariant()} normal time **",
         };
 
     public ConsoleKey GetYesKey() =>
         _cliLanguage switch
         {
             SupportedUiLanguage.Nl => ConsoleKey.J,
-            _ => ConsoleKey.Y
+            _ => ConsoleKey.Y,
         };
 }

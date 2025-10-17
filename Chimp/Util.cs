@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
@@ -46,7 +45,7 @@ public static class Util
             0.25 => $"{whole}'15",
             0.5  => $"{whole}'30",
             0.75 => $"{whole}'45",
-            _ => hours.ToString(CultureInfo.InvariantCulture)
+            _ => hours.ToString(CultureInfo.InvariantCulture),
         };
     }
 
@@ -55,7 +54,7 @@ public static class Util
         // project match: p1 or p1-1 or p1-1,2
 
         project = 0;
-        tags = Array.Empty<int>();
+        tags = [];
         var projectMatch = Regex.Match(projectSpec, @"^p(?<Project>\d{1,2}(?:-\d{1,2}(?:,\d{1,2})*)?)$");
         if (!projectMatch.Success) return false;
 
@@ -66,24 +65,10 @@ public static class Util
             strProject = strProject[..strProject.IndexOf('-')];
         }
 
-        project = int.Parse(strProject);
+        project = int.Parse(strProject, CultureInfo.InvariantCulture);
         return true;
     }
 
-    public static Cookie? GetCookie(this HttpResponseMessage response, Uri uri, string cookieName)
-    {
-        var cookies = new CookieContainer();
-        foreach (var cookieHeader in response.Headers.GetValues("Set-Cookie"))
-        {
-            try
-            {
-                cookies.SetCookies(uri, cookieHeader);
-            }
-            catch (CookieException) { /* this happens when the cookieheader is not valid */ }
-        }
-        return cookies.GetCookies(uri).FirstOrDefault(c => c.Name == cookieName);
-    }
-    
     public static string? Truncate(this string? s, int length) => s == null || s.Length < length ? s : s[..length];
 
     public static ProjectViewModel GetProjectByLine(this List<ProjectViewModel> projects, int line)
@@ -94,8 +79,8 @@ public static class Util
 
     public static List<long> MapTagLinesToIds(this List<TagViewModel> tags, IEnumerable<int> lines)
     {
-        return lines.Select(tagLine => tags.SingleOrDefault(t => t.Line == tagLine)?.ApiTag.Id
-                                ?? throw new PebcakException("previously fetched tags list does not contain line #{Line}", new() {{"Line", tagLine}}))
+        return lines
+            .Select(tagLine => tags.SingleOrDefault(t => t.Line == tagLine)?.ApiTag.Id ?? throw new PebcakException("previously fetched tags list does not contain line #{Line}", new() {{"Line", tagLine}}))
             .ToList();
     }
 }
