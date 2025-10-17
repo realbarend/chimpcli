@@ -1,6 +1,6 @@
 namespace Chimp;
 
-public class ChimpUpdate(ArgumentShifter args, ChimpService service)
+public class ChimpUpdate(ArgumentShifter args, IChimpService service)
 {
     public async Task Run()
     {
@@ -10,6 +10,7 @@ public class ChimpUpdate(ArgumentShifter args, ChimpService service)
         // args parsing is a bit of a hassle because the next arg may be the first word of the 'notes' parameter
         var remainingArgs = args.GetRemainingArgs();
         var nextArg = remainingArgs.FirstOrDefault();
+
         if (nextArg != null)
         {
             if (Util.TryParseProjectSpec(nextArg, out var project, out var tags))

@@ -2,7 +2,7 @@ using Chimp.Models;
 
 namespace Chimp;
 
-public class ChimpListTimeSheet(ChimpService service)
+public class ChimpListTimeSheet(IChimpService service)
 {
     public async Task Run(int? weekOffset = null)
     {
@@ -33,12 +33,12 @@ public class ChimpListTimeSheet(ChimpService service)
             Console.WriteLine("{0,-60} {1}", "--", "--");
             Console.WriteLine(localizer.GetDaySummary(weekTotal, billableTotal, displayDay, dayRows.Sum(r => r.Hours)));
         }
-        
+
         if (timeTravelerBaseDate != null)
         {
             var objectiveTime = Util.GetFirstDayOfWeek(DateTime.Now);
             var userTime = Util.GetFirstDayOfWeek(timeTravelerBaseDate.Value);
-            
+
             Console.WriteLine();
             Console.WriteLine(localizer.GetTimeTravelerAlert(Convert.ToInt32((userTime - objectiveTime).TotalDays / 7)));
         }

@@ -1,6 +1,6 @@
 namespace Chimp;
 
-public class ChimpDelete(ArgumentShifter args, ChimpService service)
+public class ChimpDelete(ArgumentShifter args, IChimpService service)
 {
     public async Task Run()
     {
@@ -14,7 +14,7 @@ public class ChimpDelete(ArgumentShifter args, ChimpService service)
             Console.WriteLine(localizer.TranslateLiteral("Not removed."));
             Environment.Exit(1);
         }
-        
+
         await service.DeleteRow(line);
     }
 }

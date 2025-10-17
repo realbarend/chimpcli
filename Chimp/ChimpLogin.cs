@@ -1,6 +1,6 @@
 namespace Chimp;
 
-public class ChimpLogin(ChimpService service)
+public class ChimpLogin(IChimpService service)
 {
     public async Task Run()
     {

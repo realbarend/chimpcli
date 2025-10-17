@@ -1,6 +1,6 @@
 namespace Chimp;
 
-public class ChimpAdd(ArgumentShifter args, ChimpService service)
+public class ChimpAdd(ArgumentShifter args, IChimpService service)
 {
     public async Task Run()
     {

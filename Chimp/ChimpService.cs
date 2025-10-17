@@ -5,7 +5,7 @@ using Chimp.Models.Api;
 
 namespace Chimp;
 
-public class ChimpService
+public class ChimpService : IChimpService
 {
     private readonly string _stateFilePath;
     private readonly StateData _state = new();

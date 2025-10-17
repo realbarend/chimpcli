@@ -21,7 +21,6 @@ jobs:
         with:
           dotnet-version: '9.0.x'
       - name: test
-        # let's pretend we wrote any automated tests
         run: dotnet test
       - name: publish framework-dependent executables
         run: |
