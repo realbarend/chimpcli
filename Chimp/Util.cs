@@ -83,4 +83,6 @@ public static class Util
             .Select(tagLine => tags.SingleOrDefault(t => t.Line == tagLine)?.ApiTag.Id ?? throw new PebcakException("previously fetched tags list does not contain line #{Line}", new() {{"Line", tagLine}}))
             .ToList();
     }
+
+    public static DateTime WithTime(this DateTime date, TimeOnly time) => date.Date + time.ToTimeSpan();
 }

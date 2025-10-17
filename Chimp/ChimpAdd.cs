@@ -11,8 +11,8 @@ public class ChimpAdd(ArgumentShifter args, IChimpService service)
         var timeSpec = args.GetString("timeSpec");
         var timeTravelingDate = service.GetTimeTravelingDate();
         var baseDate = timeTravelingDate ?? DateTime.Now;
-        var timeInterval = new TimeInterval(timeSpec, baseDate, service.GetLocalizer().ChimpCulture);
-        if (timeTravelingDate != null && !timeInterval.InputContainsWeekDay) throw new PebcakException("when time traveling, the timeSpec must always include the weekday, eg 'fr:{TimeSpec}'", new() { { "TimeSpec", timeSpec } });
+        var timeInterval = TimeInterval.Parse(timeSpec, baseDate, service.GetLocalizer().ChimpCulture);
+        if (timeTravelingDate != null && ! TimeInterval.TryParseDayPrefix(timeSpec, service.GetLocalizer().ChimpCulture, out _)) throw new PebcakException("when time traveling, the timeSpec must always include the weekday, eg 'fr:{TimeSpec}'", new() { { "TimeSpec", timeSpec } });
 
         var notes = string.Join(" ", args.GetRemainingArgs());
         await service.AddRow(project, tags, timeInterval, notes);

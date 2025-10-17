@@ -11,24 +11,21 @@ public class ChimpUpdate(ArgumentShifter args, IChimpService service)
         var remainingArgs = args.GetRemainingArgs();
         var nextArg = remainingArgs.FirstOrDefault();
 
-        if (nextArg != null)
+        if (nextArg == null)
         {
-            if (Util.TryParseProjectSpec(nextArg, out var project, out var tags))
-            {
-                await service.UpdateProject(line, project, tags);
-                return;
-            }
-
-            try
-            {
-                var interval = new TimeInterval(nextArg, baseDate, service.GetLocalizer().ChimpCulture);
-                await service.UpdateTimeInterval(line, interval);
-                return;
-            }
-            catch { /* parsing the arg as a timeinterval failed: we now assume the arg is a note */ }
+            await service.UpdateNotes(line, string.Empty);
         }
-
-        var notes = string.Join(" ", remainingArgs);
-        await service.UpdateNotes(line, notes);
+        else if (Util.TryParseProjectSpec(nextArg, out var project, out var tags))
+        {
+            await service.UpdateProject(line, project, tags);
+        }
+        else if (TimeInterval.TryParse(nextArg, baseDate, service.GetLocalizer().ChimpCulture, out var timeInterval))
+        {
+            await service.UpdateTimeInterval(line, timeInterval);
+        }
+        else
+        {
+            await service.UpdateNotes(line, string.Join(" ", remainingArgs));
+        }
     }
 }

@@ -17,13 +17,15 @@ public class TimeIntervalTests
         var expectedStart = DateTime.SpecifyKind(new DateTime(year, month, day, startHour, startMinute, 0), DateTimeKind.Local);
         var expectedEnd = expectedStart.AddMinutes(durationMinutes);
 
-        var result = new TimeInterval(input, dateBase, CultureInfo.GetCultureInfo("nl"));
+        var result = TimeInterval.Parse(input, dateBase, CultureInfo.GetCultureInfo("nl"));
         result.Start.ShouldBe(expectedStart);
         result.End.ShouldBe(expectedEnd);
-        result.InputContainsWeekDay.ShouldBe(expectedWeekDayNumber.HasValue);
+
+        TimeInterval.TryParseDayPrefix(input, CultureInfo.GetCultureInfo("nl"), out var weekDayNumber).ShouldBe(expectedWeekDayNumber.HasValue);
+        if (expectedWeekDayNumber.HasValue) weekDayNumber.ShouldBe(expectedWeekDayNumber.Value);
     }
 
-    [TestCase("xx:9-10", "could not parse the weekdayprefix*")] // TODO detected weekdayprefix but could not parse
+    [TestCase("xx:9-10", "detected weekdayprefix but could not parse*")]
     [TestCase("x:9-10", "cannot parse*")]
     [TestCase("10-9", "*end time should be after start time")]
     [TestCase("9+999", "*time interval is not allowed not exceed 10 hours")]
@@ -33,7 +35,7 @@ public class TimeIntervalTests
     public void TestException(string input, string message)
     {
         var dateBase = DateTime.SpecifyKind(new DateTime(2000, 1, 5), DateTimeKind.Local);
-        var act = () => new TimeInterval(input, dateBase, CultureInfo.GetCultureInfo("nl"));
+        var act = () => TimeInterval.Parse(input, dateBase, CultureInfo.GetCultureInfo("nl"));
         act.ShouldThrow<PebcakException>(message);
     }
 
@@ -45,10 +47,10 @@ public class TimeIntervalTests
     {
         var dateBase = DateTime.SpecifyKind(new DateTime(2000, 1, 5), DateTimeKind.Local);
 
-        var act = () => new TimeInterval(input, dateBase, CultureInfo.GetCultureInfo("nl"));
+        var act = () => TimeInterval.Parse(input, dateBase, CultureInfo.GetCultureInfo("nl"));
         act.ShouldThrow<Exception>();
 
-        act = () => new TimeInterval(input, dateBase, CultureInfo.GetCultureInfo("nl"));
-        act.ShouldThrow<Exception>();
+        TimeInterval.TryParse(input, dateBase, CultureInfo.GetCultureInfo("nl"), out var interval);
+        interval.ShouldBeNull();
     }
 }
