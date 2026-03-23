@@ -1,64 +1,64 @@
 ﻿using System.Text;
-using Chimp;
+using Chimp.Api;
+using Chimp.Api.AwsCognito;
+using Chimp.Common;
+using Chimp.Services;
+using Chimp.Shell;
+using static Chimp.Shell.Localization;
 
-Console.OutputEncoding = Encoding.UTF8;
+namespace Chimp;
 
-var stateFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".chimpcli");
-var service = new ChimpService(stateFilePath);
-var shifter = new ArgumentShifter(args);
-var defaultCommand = File.Exists(stateFilePath) ? "ls" : "login";
-
-try
+internal static class Program
 {
-    switch (shifter.GetString("command", defaultCommand))
+    public static async Task Main()
     {
-        case "l":
-        case "login":
-            await new ChimpLogin(service).Run();
-            await new ChimpListProjects(service).Run();
-            await new ChimpListTimeSheet(service).Run();
-            break;
-        case "p":
-        case "projects":
-            await new ChimpListProjects(service).Run();
-            break;
-        case "ls":
-        case "list":
-            await new ChimpListTimeSheet(service).Run();
-            break;
-        case "w":
-        case "week":
-            var weekOffset = shifter.GetInt32("weekOffset", "0");
-            await new ChimpListTimeSheet(service).Run(weekOffset);
-            break;
-        case "a":
-        case "add":
-            await new ChimpAdd(shifter, service).Run();
-            await new ChimpListTimeSheet(service).Run();
-            break;
-        case "u":
-        case "update":
-            await new ChimpUpdate(shifter, service).Run();
-            await new ChimpListTimeSheet(service).Run();
-            break;
-        case "d":
-        case "del":
-        case "delete":
-            await new ChimpDelete(shifter, service).Run();
-            await new ChimpListTimeSheet(service).Run();
-            break;
-        case "help":
-        default:
-            Console.WriteLine(service.GetLocalizer().GetHelpMessage());
-            return;
+        IEnvironment environment = new SystemEnvironment();
+
+        Console.OutputEncoding = Encoding.UTF8;
+        var logger = new DebugLogger(environment.DebugEnabled ? Console.Out : new StreamWriter(Stream.Null));
+
+        var stateFilePath = Path.Combine(environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".chimpcli");
+        var stateBag = InitializeStateBag(stateFilePath, logger);
+        var authentication = new CognitoAuthentication(stateBag, new HttpClient(), logger);
+        var timeSheetService = new TimeSheetService(stateBag, new Client(stateBag, authentication, new HttpClient { BaseAddress = new Uri("https://web.timechimp.com/api/") }, logger), logger);
+        LanguageHelper.SetUiLanguage(environment.GetEnvironmentVariable(environment.ChimpCliLanguage) ?? timeSheetService.GetUserLanguage());
+
+        try
+        {
+            var command = new CommandParser(environment, logger).ParseCommandLine();
+            await command.Handle(timeSheetService);
+        }
+        catch (Error error)
+        {
+            Console.WriteLine($"Error: {Localize(error.Message, error.Args)}");
+            if (environment.DebugEnabled) Console.WriteLine(error.StackTrace);
+            else WriteLocalized("Setting environment variable {EnableDebug}=1 may show more details.", new { EnableDebug = environment.ChimpCliDebug });
+            Console.WriteLine();
+            WriteLocalized("Try 'chimp help' to get help.");
+        }
+        finally
+        {
+            stateBag.Save();
+        }
     }
-}
-catch (LocalizedException le)
-{
-    var localizer = service.GetLocalizer();
-    Console.Error.WriteLine($"Error: {localizer.TranslateLiteral(le.Message, le.Args)}");
-    Console.Error.WriteLine(le.StackTrace);
-    Console.Error.WriteLine();
-    Console.Error.WriteLine(localizer.TranslateLiteral("try 'chimp help' to get help"));
-    Environment.Exit(1);
+
+    private static PersistablePropertyBag InitializeStateBag(string stateFilePath, DebugLogger logger)
+    {
+        PersistablePropertyBag? appState = null;
+        try
+        {
+            appState = PersistablePropertyBag.ReadFromDisk(stateFilePath);
+        }
+        catch (FileNotFoundException)
+        {
+            logger.Log("** could not find state-file -- this should get solved when logging in");
+        }
+        catch (Exception e)
+        {
+            // don't throw here because that would block the login flow
+            WriteLocalized("** failed to read state-file: {Message} -- try logging in again or manually remove the file", new { Message = e.Message });
+        }
+
+        return appState ?? PersistablePropertyBag.CreateNew(stateFilePath);
+    }
 }

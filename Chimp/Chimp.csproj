@@ -9,13 +9,21 @@
         <Nullable>enable</Nullable>
         <RuntimeIdentifiers>win-x64;osx-x64;linux-x64</RuntimeIdentifiers>
         <AssemblyName>chimp</AssemblyName>
-        <LangVersion>latest</LangVersion>
+        <LangVersion>preview</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Amazon.Extensions.CognitoAuthentication" Version="3.1.1" />
-      <PackageReference Include="AWSSDK.CognitoIdentityProvider" Version="4.0.3.10" />
-      <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.0-rc.2.25502.107" />
+      <PackageReference Include="Amazon.Extensions.CognitoAuthentication" Version="3.1.4" />
+      <PackageReference Include="AWSSDK.CognitoIdentityProvider" Version="4.0.6.3" />
+      <PackageReference Include="NsDepCop" Version="2.7.0">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+      <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.5" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="ChimpService.cs" />
     </ItemGroup>
 
     <PropertyGroup>
