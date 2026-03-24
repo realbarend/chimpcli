@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## Release v2.0.1 (24-mar-2026)
+
+- enabled self-contained builds for tags ending in '-self-contained'
+
 ## Release v2.0 (23-mar-2026)
 
 - **complete rehaul** of the CLI and its core logic

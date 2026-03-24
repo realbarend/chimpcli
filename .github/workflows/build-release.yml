@@ -30,10 +30,10 @@ jobs:
           tar czf out/chimp-osx-x64.tar.gz -C Chimp/bin/Release/net10.0/osx-x64/publish chimp ../../../../../../CHANGELOG.md ../../../../../../README.md
           tar czf out/chimp-linux-x64.tar.gz -C Chimp/bin/Release/net10.0/linux-x64/publish chimp ../../../../../../CHANGELOG.md ../../../../../../README.md
       - name: publish self-contained executables
-        # disabled for the time being because it uses a lot of github storage
-        if: false
+        # Only build self-contained if a special tag is used, because it uses a lot of github storage.
+        if: endsWith(github.ref, '-self-contained')
         run: |
-          dotnet msbuild -t:PublishAllRids -p:Configuration=Release -p:SelfContained=true
+          dotnet msbuild Chimp -t:PublishAllRids -p:Configuration=Release -p:SelfContained=true
           mkdir -p out
           zip -j out/chimp-win-x64-selfcontained.zip Chimp/bin/Release/net10.0/win-x64/publish/chimp.exe CHANGELOG.md README.md
           tar czf out/chimp-osx-x64-selfcontained.tar.gz -C Chimp/bin/Release/net10.0/osx-x64/publish chimp ../../../../../../CHANGELOG.md ../../../../../../README.md
@@ -62,6 +62,15 @@ jobs:
           mv out/chimp-win-x64.zip out/chimp-win-x64-${{ env.RELEASE_VERSION }}.zip
           mv out/chimp-osx-x64.tar.gz out/chimp-osx-x64-${{ env.RELEASE_VERSION }}.tar.gz
           mv out/chimp-linux-x64.tar.gz out/chimp-linux-x64-${{ env.RELEASE_VERSION }}.tar.gz
+          if [ -f "out/chimp-win-x64-selfcontained.zip" ]; then
+            mv out/chimp-win-x64-selfcontained.zip out/chimp-win-x64-selfcontained-${{ env.RELEASE_VERSION }}.zip
+          fi
+          if [ -f "out/chimp-osx-x64-selfcontained.tar.gz" ]; then
+            mv out/chimp-osx-x64-selfcontained.tar.gz out/chimp-osx-x64-selfcontained-${{ env.RELEASE_VERSION }}.tar.gz
+          fi
+          if [ -f "out/chimp-linux-x64-selfcontained.tar.gz" ]; then
+            mv out/chimp-linux-x64-selfcontained.tar.gz out/chimp-linux-x64-selfcontained-${{ env.RELEASE_VERSION }}.tar.gz
+          fi
       - name: release
         uses: softprops/action-gh-release@v2
         with:
@@ -71,6 +80,5 @@ jobs:
           tag_name: ${{ github.ref }}
           body_path: CHANGELOG-RELEASE.md
           files: |
-            out/chimp-win-x64-${{ env.RELEASE_VERSION }}.zip
-            out/chimp-osx-x64-${{ env.RELEASE_VERSION }}.tar.gz
-            out/chimp-linux-x64-${{ env.RELEASE_VERSION }}.tar.gz
+            out/*.zip
+            out/*.tar.gz
