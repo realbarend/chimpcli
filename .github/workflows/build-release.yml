@@ -59,17 +59,19 @@ jobs:
         run: echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
       - name: add version to artifact names
         run: |
-          mv out/chimp-win-x64.zip out/chimp-win-x64-${{ env.RELEASE_VERSION }}.zip
-          mv out/chimp-osx-x64.tar.gz out/chimp-osx-x64-${{ env.RELEASE_VERSION }}.tar.gz
-          mv out/chimp-linux-x64.tar.gz out/chimp-linux-x64-${{ env.RELEASE_VERSION }}.tar.gz
+          # Use version without the '-self-contained' suffix for cleaner filenames.
+          CLEAN_VERSION=${RELEASE_VERSION%-self-contained}
+          mv out/chimp-win-x64.zip out/chimp-win-x64-${CLEAN_VERSION}.zip
+          mv out/chimp-osx-x64.tar.gz out/chimp-osx-x64-${CLEAN_VERSION}.tar.gz
+          mv out/chimp-linux-x64.tar.gz out/chimp-linux-x64-${CLEAN_VERSION}.tar.gz
           if [ -f "out/chimp-win-x64-selfcontained.zip" ]; then
-            mv out/chimp-win-x64-selfcontained.zip out/chimp-win-x64-selfcontained-${{ env.RELEASE_VERSION }}.zip
+            mv out/chimp-win-x64-selfcontained.zip out/chimp-win-x64-selfcontained-${CLEAN_VERSION}.zip
           fi
           if [ -f "out/chimp-osx-x64-selfcontained.tar.gz" ]; then
-            mv out/chimp-osx-x64-selfcontained.tar.gz out/chimp-osx-x64-selfcontained-${{ env.RELEASE_VERSION }}.tar.gz
+            mv out/chimp-osx-x64-selfcontained.tar.gz out/chimp-osx-x64-selfcontained-${CLEAN_VERSION}.tar.gz
           fi
           if [ -f "out/chimp-linux-x64-selfcontained.tar.gz" ]; then
-            mv out/chimp-linux-x64-selfcontained.tar.gz out/chimp-linux-x64-selfcontained-${{ env.RELEASE_VERSION }}.tar.gz
+            mv out/chimp-linux-x64-selfcontained.tar.gz out/chimp-linux-x64-selfcontained-${CLEAN_VERSION}.tar.gz
           fi
       - name: release
         uses: softprops/action-gh-release@v2
