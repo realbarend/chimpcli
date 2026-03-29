@@ -17,9 +17,9 @@ public class Client(PersistablePropertyBag stateBag, ICognitoAuthentication auth
         {
             await authentication.Login(userName, password);
         }
-        catch (Exception e) // Amazon.CognitoIdentityProvider.Model.NotAuthorizedException: Incorrect username or password
+        catch (Exception e)
         {
-            throw new Error("login attempt failed, maybe wrong password. note: timechimp can temporarily block your account after multiple failures ({Message})", new { Message = e.Message });
+            throw new Error("login attempt failed: {Message}. Note: timechimp may temporarily block your account after multiple failures.", new { Message = e.Message });
         }
 
         // we read and cache the user at login, so it is fetched exactly one time from the api

@@ -11,6 +11,7 @@ namespace Chimp.Api.AwsCognito;
 public class CognitoAuthentication(PersistablePropertyBag stateBag, HttpClient httpClient, DebugLogger logger) : ICognitoAuthentication
 {
     private record Environment(string UserPoolId, string ClientId);
+    private record AuthenticationSession(AmazonCognitoIdentityProviderClient Provider, Environment Environment, CognitoUser User, AuthFlowResponse AuthenticationResponse);
 
     private record Credentials(
         Environment Environment,
@@ -31,10 +32,42 @@ public class CognitoAuthentication(PersistablePropertyBag stateBag, HttpClient h
         var userPool = new CognitoUserPool(environment.UserPoolId, environment.ClientId, provider);
         var user = new CognitoUser(userName, environment.ClientId, userPool, provider);
         var response = await user.StartWithSrpAuthAsync(new InitiateSrpAuthRequest { Password = password });
-        var credentials = Credentials.FromAuthenticationResult(environment, userName, response.AuthenticationResult);
+        var authenticationSession = new AuthenticationSession(provider, environment, user, response);
+        var authenticationResult = await HandleMfaChallenge(authenticationSession);
+        var credentials = Credentials.FromAuthenticationResult(environment, userName, authenticationResult);
         stateBag.Set(credentials);
 
         logger.Log($"** login successful, got accesstoken valid until {credentials.Expires.ToLocalTime():D}, will automatically refresh using refreshtoken");
+    }
+
+    private static async Task<AuthenticationResultType> HandleMfaChallenge(AuthenticationSession session)
+    {
+        // No challenge means that 2fa is not enabled.
+        if (session.AuthenticationResponse.ChallengeName == null) return session.AuthenticationResponse.AuthenticationResult;
+
+        if (session.AuthenticationResponse.ChallengeName == ChallengeNameType.SOFTWARE_TOKEN_MFA) return await ProcessSoftwareTokenChallenge(session);
+
+        throw new Error("could not finish login: unsupported challenge: {Challenge}", new { Challenge = session.AuthenticationResponse.ChallengeName.Value });
+    }
+
+    private static async Task<AuthenticationResultType> ProcessSoftwareTokenChallenge(AuthenticationSession session)
+    {
+        Console.Write("Enter your 2FA code: ");
+        var softwareToken = Console.ReadLine();
+        if (string.IsNullOrWhiteSpace(softwareToken)) throw new Error("2fa code empty: cannot finish login");
+
+        var response = await session.Provider.RespondToAuthChallengeAsync(new RespondToAuthChallengeRequest
+        {
+            ChallengeName = session.AuthenticationResponse.ChallengeName,
+            ClientId = session.Environment.ClientId,
+            ChallengeResponses = new Dictionary<string, string>
+            {
+                { "USERNAME", session.User.UserID },
+                { "SOFTWARE_TOKEN_MFA_CODE", softwareToken },
+            },
+            Session = session.AuthenticationResponse.SessionID,
+        });
+        return response.AuthenticationResult;
     }
 
     /// <exception cref="Exception">if the current token expired and could not be refreshed</exception>

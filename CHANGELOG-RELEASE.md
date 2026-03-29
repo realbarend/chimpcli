@@ -1,5 +1,5 @@
 # CHANGELOG
 
-## Release v2.0.1 (24-mar-2026)
+## Release v2.1 (29-mar-2026)
 
-- enabled self-contained builds for tags ending in '-self-contained'
+- added support for multi-factor authentication (software tokens)
