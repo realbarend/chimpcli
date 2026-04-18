@@ -15,7 +15,7 @@ public class DeleteTimeSheetRowCommand : IShellCommand
         var row = timeSheet.GetRow(ShortId);
         RenderTimeSheetRow(timeSheet, row);
 
-        WriteLocalized("About to delete row #{Line}: are you sure? Y/N", new { Line = ShortId });
+        WriteLocalized("About to delete row #{Line}: are you sure? Y/N", ShortId);
         if ( ! ReadLocalizedYesKey())
         {
             WriteLocalized("Not removed.");

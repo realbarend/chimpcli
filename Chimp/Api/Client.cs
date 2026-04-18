@@ -19,7 +19,7 @@ public class Client(PersistablePropertyBag stateBag, ICognitoAuthentication auth
         }
         catch (Exception e)
         {
-            throw new Error("login attempt failed: {Message}. Note: timechimp may temporarily block your account after multiple failures.", new { Message = e.Message });
+            throw new Error("login attempt failed: {Message}. Note: timechimp may temporarily block your account after multiple failures.", e.Message);
         }
 
         // we read and cache the user at login, so it is fetched exactly one time from the api
@@ -126,7 +126,7 @@ public class Client(PersistablePropertyBag stateBag, ICognitoAuthentication auth
         if (data != null) request.Content = new StringContent(data.Serialize(), new MediaTypeHeaderValue("application/json"));
 
         var response = await httpClient.SendAsync(request);
-        if (!response.IsSuccessStatusCode) throw new Error("api returned httpcode {Code} ({CodeString}): if this persists, try to login", new { Code = (int)response.StatusCode, CodeString = response.StatusCode.ToString() });
+        if (!response.IsSuccessStatusCode) throw new Error("api returned httpcode {Code} ({CodeString}): if this persists, try to login", (int)response.StatusCode, response.StatusCode.ToString());
         var bodyString = await response.Content.ReadAsStringAsync();
         if (bodyString.TrimStart().StartsWith('<')) throw new Error("api returned html: probably need to re-authorize");
 

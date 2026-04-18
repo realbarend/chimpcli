@@ -48,13 +48,13 @@ public class CommandParser(IEnvironment environment, DebugLogger logger)
     {
         var project = ShiftArgument(args, "project");
         if (!RenderHelper.TryParseProjectAlias(project, out var projectShortId, out var tagShortIds))
-            throw new Error("invalid project '{ProjectAlias}', use pNN or pNN-A,B", new { ProjectAlias = project });
+            throw new Error("invalid project '{ProjectAlias}', use pNN or pNN-A,B", project);
 
         var remainingAddArgs = args.ToArray();
 
         // args should be '<timeEntry> <comments>', '<comments> <timeEntry>' or just '<timeEntry>', so cannot be empty
         if (remainingAddArgs.Length == 0)
-            throw new Error("expected '{ParamName}' parameter missing", new { ParamName = "timeEntry" });
+            throw new Error("expected '{ParamName}' parameter missing", "timeEntry");
 
         if (TimeEntry.TryParse(remainingAddArgs[0], out var timeEntry))
             return new AddTimeSheetRowCommand { Project = projectShortId, Tags = tagShortIds, TimeEntry = timeEntry, Notes = string.Join(" ", remainingAddArgs[1..]) };
@@ -62,7 +62,7 @@ public class CommandParser(IEnvironment environment, DebugLogger logger)
         if (TimeEntry.TryParse(remainingAddArgs[^1], out timeEntry))
             return new AddTimeSheetRowCommand { Project = projectShortId, Tags = tagShortIds, TimeEntry = timeEntry, Notes = string.Join(" ", remainingAddArgs[..^1]) };
 
-        throw new Error("expected '{ParamName}' parameter missing", new { ParamName = "timeEntry" });
+        throw new Error("expected '{ParamName}' parameter missing", "timeEntry");
     }
 
     private static IShellCommand ParseUpdateCommand(List<string> args)
@@ -72,7 +72,7 @@ public class CommandParser(IEnvironment environment, DebugLogger logger)
         var remainingArgs = args.ToArray();
         var nextArg = remainingArgs.FirstOrDefault();
 
-        if (nextArg == null) throw new Error("expected '{ParamName}' parameter missing", new { ParamName = "new-notes" });
+        if (nextArg == null) throw new Error("expected '{ParamName}' parameter missing", "new-notes");
 
         if (RenderHelper.TryParseProjectAlias(nextArg, out var projectShortId, out var tagShortIds))
             return new UpdateTimeSheetRowCommand { ShortId = new ShortId<TimeSheetRow>(shortId), Project = projectShortId, Tags = tagShortIds };
@@ -88,7 +88,7 @@ public class CommandParser(IEnvironment environment, DebugLogger logger)
         var shortId = ShiftNumberArgument(args, "number#");
         return TimeEntry.TryParse(ShiftArgument(args, "timeEntry"), out var timeEntry)
             ? new CopyTimeSheetRowCommand { ShortId = new ShortId<TimeSheetRow>(shortId), TimeEntry = timeEntry }
-            : throw new Error("expected '{ParamName}' parameter missing", new { ParamName = "timeEntry" });
+            : throw new Error("expected '{ParamName}' parameter missing", "timeEntry");
     }
 
     private LoginCommand ParseLoginCommand()
@@ -106,7 +106,7 @@ public class CommandParser(IEnvironment environment, DebugLogger logger)
 
     private static string ShiftArgument(List<string> args, string argName, string? defaultValue = null)
     {
-        if (args.Count <= 0) return defaultValue ?? throw new Error("expected '{ParamName}' parameter missing", new { ParamName = argName });
+        if (args.Count <= 0) return defaultValue ?? throw new Error("expected '{ParamName}' parameter missing", argName);
 
         var arg = args[0];
         args.RemoveAt(0);
@@ -118,6 +118,6 @@ public class CommandParser(IEnvironment environment, DebugLogger logger)
         var numberStr = ShiftArgument(args, argName, defaultValue?.ToString());
         return int.TryParse(numberStr, out var value)
             ? value
-            : throw new Error("parameter '{ParamName}' must be a number", new { ParamName = argName });
+            : throw new Error("parameter '{ParamName}' must be a number", argName);
     }
 }

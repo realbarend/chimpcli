@@ -36,7 +36,7 @@ public static class RenderHelper
         Console.WriteLine("{0,-60} {1}", "--", "--");
         Console.WriteLine("{0,-60} {1}",
             Localize("CURRENT WEEK {TotalHours} hours of which {BillableTotal} billable",
-                new { TotalHours = TimeEntry.ToCanonicalDuration(timeSheet.WeekTotal), BillableTotal = TimeEntry.ToCanonicalDuration(timeSheet.BillableTotal) }),
+                TimeEntry.ToCanonicalDuration(timeSheet.WeekTotal), TimeEntry.ToCanonicalDuration(timeSheet.BillableTotal)),
             $"{displayDay} {TimeEntry.ToCanonicalDuration(dayRows.Sum(r => r.TimeDetails.Hours))} {Localize("hours")}");
     }
 
@@ -76,11 +76,9 @@ public static class RenderHelper
         var timeTravelingWeeks = Convert.ToInt32((userTime.DayNumber - objectiveTime.DayNumber) / 7);
 
         Console.WriteLine();
-        WriteLocalized("** TIME TRAVELER ALERT  ---  you are currently {WeekCount} {Weeks} {AheadOrBehind} normal time **", new
-        {
-            WeekCount = Math.Abs(timeTravelingWeeks),
-            Weeks = Localize(Math.Abs(timeTravelingWeeks) == 1 ? "week" : "weeks"),
-            AheadOrBehind = Localize(timeTravelingWeeks < 0 ? "behind" : "ahead of").ToUpperInvariant(),
-        });
+        WriteLocalized("** TIME TRAVELER ALERT  ---  you are currently {WeekCount} {Weeks} {AheadOrBehind} normal time **",
+            Math.Abs(timeTravelingWeeks),
+            Localize(Math.Abs(timeTravelingWeeks) == 1 ? "week" : "weeks"),
+            Localize(timeTravelingWeeks < 0 ? "behind" : "ahead of").ToUpperInvariant());
     }
 }

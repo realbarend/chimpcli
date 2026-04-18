@@ -29,7 +29,7 @@ public record TimeDetails
     {
         if (timeEntry.DayOfWeek != null) return timeSheet.Date.WithWeekDay(timeEntry.DayOfWeek.Value);
         if (timeSheet.Date.IsCurrentWeek()) return DateOnly.FromDateTime(DateTime.Now);
-        throw new Error("when time traveling, the timeEntry must always include the weekday, eg 'fr:{TimeEntry}'", new { TimeEntry = timeEntry.ToCanonicalString() });
+        throw new Error("when time traveling, the timeEntry must always include the weekday, eg 'fr:{TimeEntry}'", timeEntry.ToCanonicalString());
     }
 
     public void Validate()

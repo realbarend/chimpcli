@@ -47,7 +47,7 @@ public class CognitoAuthentication(PersistablePropertyBag stateBag, HttpClient h
 
         if (session.AuthenticationResponse.ChallengeName == ChallengeNameType.SOFTWARE_TOKEN_MFA) return await ProcessSoftwareTokenChallenge(session);
 
-        throw new Error("could not finish login: unsupported challenge: {Challenge}", new { Challenge = session.AuthenticationResponse.ChallengeName.Value });
+        throw new Error("could not finish login: unsupported challenge: {Challenge}", session.AuthenticationResponse.ChallengeName.Value);
     }
 
     private static async Task<AuthenticationResultType> ProcessSoftwareTokenChallenge(AuthenticationSession session)
@@ -144,7 +144,7 @@ public class CognitoAuthentication(PersistablePropertyBag stateBag, HttpClient h
         }
         catch (Exception e)
         {
-            throw new Error("** refresh: refreshing the accesstoken failed: {Message}", new { e.Message });
+            throw new Error("** refresh: refreshing the accesstoken failed: {Message}", e.Message);
         }
     }
 }

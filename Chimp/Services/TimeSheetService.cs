@@ -114,7 +114,7 @@ public class TimeSheetService(PersistablePropertyBag stateBag, IClient api, Debu
         var row = timeSheet.GetRow(shortId);
 
         var projectTask = timeSheet.ProjectTasks.SingleOrDefault(p => p.Id == row.ProjectTaskId)?.ShortId
-                          ?? throw new Error("cannot copy row #{Line}, because the project or tag is not available", new { Line = shortId });
+                          ?? throw new Error("cannot copy row #{Line}, because the project or tag is not available", shortId);
         var tags = row.TagIds.Select(id => timeSheet.Tags.SingleOrDefault(t => t.Id == id)?.ShortId ?? throw new Error("cannot copy row #{Line}, because the project or tag is not available")).ToArray();
         timeEntry = timeEntry with { DayOfWeek = timeEntry.DayOfWeek ?? row.TimeDetails.Date.DayOfWeek };
 

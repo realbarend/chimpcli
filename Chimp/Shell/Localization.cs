@@ -1,96 +1,51 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace Chimp.Shell;
 
 public static class Localization
 {
-    private enum UiLanguage { Nl, En }
-    private static UiLanguage GetLanguage() => Enum.TryParse<UiLanguage>(CultureInfo.CurrentUICulture.Name, true, out var uiLanguage) ? uiLanguage :  UiLanguage.En;
+    private enum UiLanguage { En, Nl }
 
-    public static void WriteLocalized(string literal, object? args = null) => Console.WriteLine(Localize(literal, args));
+    private static UiLanguage CurrentUiLanguage =>
+        Enum.TryParse<UiLanguage>(CultureInfo.CurrentUICulture.Name, true, out var uiLanguage)
+            ? uiLanguage
+            : UiLanguage.En;
 
-    public static string Localize(string literal, object? args = null)
+    public static string Localize(string literal, params object?[] args)
     {
-        var language = GetLanguage();
-        var translated = literal switch
-        {
-            "** TIME TRAVELER ALERT  ---  you are currently {WeekCount} {Weeks} {AheadOrBehind} normal time **"
-                when language == UiLanguage.Nl => "** TIJDREIZIGER ALARM  ---  je bevindt je op dit moment {WeekCount} {Weeks} {AheadOrBehind} normale tijd **",
-            "week" when language == UiLanguage.Nl => "week",
-            "weeks" when language == UiLanguage.Nl => "weken",
-            "behind" when language == UiLanguage.Nl => "achter op",
-            "ahead of" when language == UiLanguage.Nl => "vooruit op",
+        var translated = LocalizeRaw(literal);
+        if (args.Length == 0) return translated;
 
-            "CURRENT WEEK {TotalHours} hours of which {BillableTotal} billable"
-                when language == UiLanguage.Nl => "DEZE WEEK {TotalHours} uren waarvan {BillableTotal} facturabel",
-            "hours" when language == UiLanguage.Nl => "uren",
+        var placeholders = GetOrderedPlaceholders(literal);
 
-            "** failed to read state-file: {Message} -- try logging in again or manually remove the file"
-                when language == UiLanguage.Nl => "** kan de state-file niet lezen: {Message} -- probeer opnieuw in te loggen of verwijder het bestand handmatig",
+        var valueMap = placeholders.Take(args.Length).Select((name, i) => (name, value: args[i]?.ToString() ?? "")).ToDictionary(x => x.name, x => x.value);
+        foreach (var (name, value) in valueMap)
+            translated = translated.Replace("{" + name + "}", value);
 
-            "** successfully logged in as {User}"
-                when language == UiLanguage.Nl => "** succesvol ingelogd als {User}",
-            "** successfully logged in using persisted credentials"
-                when language == UiLanguage.Nl => "** succesvol ingelogd met eerder opgeslagen wachtwoord",
-
-            "** refresh: got new accesstoken valid until {Date}"
-                when language == UiLanguage.Nl => "** refresh: kreeg nieuw accesstoken geldig tot {Date}",
-            "** refresh: refreshing the accesstoken failed: {Message}"
-                when language == UiLanguage.Nl => "** refresh: het refreshen van het accesstoken is mislukt: {Message}",
-
-            "About to delete row #{Line}: are you sure? Y/N" when language == UiLanguage.Nl => "Urenregel #{Line} wordt verwijderd: weet je het zeker? J/N.",
-            "Available projects" when language == UiLanguage.Nl => "Beschikbare projecten",
-            "Available tags" when language == UiLanguage.Nl => "Beschikbare labels",
-            "cannot parse timeEntry '{TimeEntry}'" when language == UiLanguage.Nl => "kan timeEntry '{TimeEntry}' niet parsen",
-            "could not parse the weekdayprefix: use 'mo:', 'tu:', 'we:', 'th:' or 'fr:'" when language == UiLanguage.Nl => "kan de weekdag niet parsen: gebruik 'ma:', 'di:', 'wo:', 'do:' of 'vr:'",
-            "expected '{ParamName}' parameter missing" when language == UiLanguage.Nl => "verwachte parameter '{ParamName}' ontbreekt",
-            "hour '{Hour}' is invalid" when language == UiLanguage.Nl => "uur '{Hour}' is ongeldig",
-            "invalid project '{ProjectAlias}', use pNN or pNN-A,B" when language == UiLanguage.Nl => "ongeldig project '{ProjectAlias}', gebruik pNN of pNN-A,B",
-            "invalid weekOffset: time travel is allowed for maximum 52 weeks" when language == UiLanguage.Nl => "ongeldige weekOffset: tijdreizen kan maximaal tot 52 weken",
-            "login attempt failed: {Message}. Note: timechimp may temporarily block your account after multiple failures." when language == UiLanguage.Nl => "inlogpoging mislukt: {Message}. Let op: timechimp kan bij meerdere inlogfouten tijdelijk je account blokkeren.",
-            "could not finish login: unsupported challenge: {Challenge}" when language == UiLanguage.Nl => "kan het inloggen niet voltooien: niet-ondersteunde challenge: {Challenge}",
-            "minute '{Minute}' is invalid" when language == UiLanguage.Nl => "minuut '{Minute}' is ongeldig",
-            "Not removed." when language == UiLanguage.Nl => "Niet verwijderd.",
-            "parameter '{ParamName}' must be a number" when language == UiLanguage.Nl => "parameter '{ParamName}' moet een getal zijn",
-            "password empty: cannot login" when language == UiLanguage.Nl => "wachtwoord leeg: kan niet inloggen",
-            "2fa code empty: cannot finish login" when language == UiLanguage.Nl => "2fa code leeg: kan het inloggen niet voltooien",
-            "previously fetched projects list does not contain line #{Line}" when language == UiLanguage.Nl => "de eerder opgehaalde projectlijst bevat geen regel met nummer #{Line}",
-            "previously fetched timesheet does not contain line #{Line}" when language == UiLanguage.Nl => "de eerder opgehaalde urenlijst bevat geen regel met nummer #{Line}",
-            "previously fetched tags list does not contain tag {Tag}" when language == UiLanguage.Nl => "de eerder opgehaalde taglijst bevat geen tag {Tag}",
-            "timeEntry '{TimeEntry}' issue: end time should be after start time" when language == UiLanguage.Nl => "probleem met timeEntry '{TimeEntry}': eindtijd moet groter zijn dan starttijd",
-            "timeEntry '{TimeEntry}' issue: start and end must be on the same day" when language == UiLanguage.Nl => "probleem met timeEntry '{TimeEntry}': start- en eindtijd moeten op dezelfde dag vallen",
-            "timeEntry '{TimeEntry}' issue: to help preventing input mistakes, a time interval is not allowed not exceed 10 hours" when language == UiLanguage.Nl => "probleem met timeEntry '{TimeEntry}': om invoerfouten te helpen voorkomen, mag een tijdsinterval niet groter zijn dan 10 uur",
-            "TODAY" when language == UiLanguage.Nl => "VANDAAG",
-            "Try 'chimp help' to get help." when language == UiLanguage.Nl => "Probeer 'chimp help' voor uitleg.",
-            "username empty: cannot login" when language == UiLanguage.Nl => "gebruikersnaam leeg: kan niet inloggen",
-            "when time traveling, the timeEntry must always include the weekday, eg 'fr:{TimeEntry}'" when language == UiLanguage.Nl => "bij tijdreizen, moet de timeEntry altijd de weekdag bevatten, bijv 'vr:{TimeEntry}'",
-            "you must first login" when language == UiLanguage.Nl => "je moet eerst inloggen",
-            "you must first fetch the project list" when language == UiLanguage.Nl => "je moet eerst de projectlijst ophalen",
-            "you must first fetch the timesheet" when language == UiLanguage.Nl => "je moet eerst de urenlijst ophalen",
-
-            "cannot copy row #{Line}, because the project or tag is not available" when language == UiLanguage.Nl => "kan rij #{Line} niet kopieren, omdat het project of tag niet beschikbaar is",
-
-            "api returned httpcode {Code} ({CodeString}): if this persists, try to login" when language == UiLanguage.Nl => "api geeft httpcode {Code} ({CodeString}): misschien moet je opnieuw inloggen",
-
-            "Setting environment variable {EnableDebug}=1 may show more details." when language == UiLanguage.Nl => "Gebruik omgevingsvariabele {EnableDebug}=1 om mogelijk meer details te krijgen.",
-
-            _ when language == UiLanguage.En => literal,
-#if DEBUG
-            _ => throw new ApplicationException($"Missing translation: {literal}"),
-#else
-            _ => literal,
-#endif
-        };
-
-        var replacements = (args?.GetType().GetProperties() ?? []).ToDictionary(p => "{" + p.Name + "}", p => p.GetValue(args)?.ToString());
-        foreach (var replacement in replacements) translated = translated.Replace(replacement.Key, replacement.Value);
+        // Append any args that had no corresponding placeholder.
+        var extraArgs = args.Skip(placeholders.Length).Select(a => a?.ToString() ?? "").Where(s => s != "").ToList();
+        if (extraArgs.Count > 0) translated += $" ({string.Join(", ", extraArgs)})";
 
         return translated;
     }
 
+    public static string[] GetOrderedPlaceholders(string literal) => Regex.Matches(literal, @"\{(\w+)\}").Select(m => m.Groups[1].Value).Distinct().ToArray();
+
+    public static void WriteLocalized(string literal, params object?[] args) => Console.WriteLine(Localize(literal, args));
+
+    private static string LocalizeRaw(string literal)
+    {
+        if (CurrentUiLanguage != UiLanguage.Nl) return literal;
+
+        if (NlTranslations.TryGetValue(literal, out var translated)) return translated;
+
+        return "[MISSING TRANSLATION] " + literal;
+    }
+
     public static void WriteHelpText()
     {
-        var helpText = GetLanguage() switch
+        var helpText = CurrentUiLanguage switch
         {
             UiLanguage.Nl =>
                             """
@@ -169,7 +124,7 @@ public static class Localization
 
     public static bool ReadLocalizedYesKey()
     {
-        var yesKey = GetLanguage() switch
+        var yesKey = CurrentUiLanguage switch
         {
             UiLanguage.Nl => ConsoleKey.J,
             _ => ConsoleKey.Y,
@@ -177,4 +132,130 @@ public static class Localization
 
         return Console.ReadKey(true).Key == yesKey;
     }
+
+    internal static readonly Dictionary<string, string> NlTranslations = new()
+    {
+        ["week"] = "week",
+        ["weeks"] = "weken",
+        ["behind"] = "achter op",
+        ["ahead of"] = "vooruit op",
+        ["hours"] = "uren",
+        ["TODAY"] = "VANDAAG",
+
+        ["** TIME TRAVELER ALERT  ---  you are currently {WeekCount} {Weeks} {AheadOrBehind} normal time **"]
+            = "** TIJDREIZIGER ALARM  ---  je bevindt je op dit moment {WeekCount} {Weeks} {AheadOrBehind} normale tijd **",
+
+        ["CURRENT WEEK {TotalHours} hours of which {BillableTotal} billable"]
+            = "DEZE WEEK {TotalHours} uren waarvan {BillableTotal} facturabel",
+
+        ["** failed to read state-file: {Message} -- try logging in again or manually remove the file"]
+            = "** kan de state-file niet lezen: {Message} -- probeer opnieuw in te loggen of verwijder het bestand handmatig",
+
+        ["** successfully logged in as {User}"]
+            = "** succesvol ingelogd als {User}",
+
+        ["** successfully logged in using persisted credentials"]
+            = "** succesvol ingelogd met eerder opgeslagen wachtwoord",
+
+        ["** refresh: got new accesstoken valid until {Date}"]
+            = "** refresh: kreeg nieuw accesstoken geldig tot {Date}",
+
+        ["** refresh: refreshing the accesstoken failed: {Message}"]
+            = "** refresh: het refreshen van het accesstoken is mislukt: {Message}",
+
+        ["About to delete row #{Line}: are you sure? Y/N"]
+            = "Urenregel #{Line} wordt verwijderd: weet je het zeker? J/N.",
+
+        ["Available projects"]
+            = "Beschikbare projecten",
+
+        ["Available tags"]
+            = "Beschikbare labels",
+
+        ["cannot parse timeEntry '{TimeEntry}'"]
+            = "kan timeEntry '{TimeEntry}' niet parsen",
+
+        ["could not parse the weekdayprefix: use 'mo:', 'tu:', 'we:', 'th:' or 'fr:'"]
+            = "kan de weekdag niet parsen: gebruik 'ma:', 'di:', 'wo:', 'do:' of 'vr:'",
+
+        ["expected '{ParamName}' parameter missing"]
+            = "verwachte parameter '{ParamName}' ontbreekt",
+
+        ["hour '{Hour}' is invalid"]
+            = "uur '{Hour}' is ongeldig",
+
+        ["invalid project '{ProjectAlias}', use pNN or pNN-A,B"]
+            = "ongeldig project '{ProjectAlias}', gebruik pNN of pNN-A,B",
+
+        ["invalid weekOffset: time travel is allowed for maximum 52 weeks"]
+            = "ongeldige weekOffset: tijdreizen kan maximaal tot 52 weken",
+
+        ["login attempt failed: {Message}. Note: timechimp may temporarily block your account after multiple failures."]
+            = "inlogpoging mislukt: {Message}. Let op: timechimp kan bij meerdere inlogfouten tijdelijk je account blokkeren.",
+
+        ["could not finish login: unsupported challenge: {Challenge}"] =
+            "kan het inloggen niet voltooien: niet-ondersteunde challenge: {Challenge}",
+
+        ["minute '{Minute}' is invalid"]
+            = "minuut '{Minute}' is ongeldig",
+
+        ["Not removed."] = "Niet verwijderd.",
+
+        ["parameter '{ParamName}' must be a number"]
+            = "parameter '{ParamName}' moet een getal zijn",
+
+        ["password empty: cannot login"]
+            = "wachtwoord leeg: kan niet inloggen",
+
+        ["2fa code empty: cannot finish login"]
+            = "2fa code leeg: kan het inloggen niet voltooien",
+
+        ["previously fetched projects list does not contain line #{Line}"]
+            = "de eerder opgehaalde projectlijst bevat geen regel met nummer #{Line}",
+
+        ["previously fetched timesheet does not contain line #{Line}"]
+            = "de eerder opgehaalde urenlijst bevat geen regel met nummer #{Line}",
+
+        ["previously fetched tags list does not contain tag {Tag}"]
+            = "de eerder opgehaalde taglijst bevat geen tag {Tag}",
+
+        ["timeEntry '{TimeEntry}' issue: end time should be after start time"]
+            = "probleem met timeEntry '{TimeEntry}': eindtijd moet groter zijn dan starttijd",
+
+        ["timeEntry '{TimeEntry}' issue: start and end must be on the same day"]
+            = "probleem met timeEntry '{TimeEntry}': start- en eindtijd moeten op dezelfde dag vallen",
+
+        ["timeEntry '{TimeEntry}' issue: to help preventing input mistakes, a time interval is not allowed not exceed 10 hours"]
+            = "probleem met timeEntry '{TimeEntry}': om invoerfouten te helpen voorkomen, mag een tijdsinterval niet groter zijn dan 10 uur",
+
+        ["Try 'chimp help' to get help."]
+            = "Probeer 'chimp help' voor uitleg.",
+
+        ["username empty: cannot login"]
+            = "gebruikersnaam leeg: kan niet inloggen",
+
+        ["when time traveling, the timeEntry must always include the weekday, eg 'fr:{TimeEntry}'"]
+            = "bij tijdreizen, moet de timeEntry altijd de weekdag bevatten, bijv 'vr:{TimeEntry}'",
+
+        ["you must first login"]
+            = "je moet eerst inloggen",
+
+        ["you must first fetch the project list"]
+            = "je moet eerst de projectlijst ophalen",
+
+        ["you must first fetch the timesheet"]
+            = "je moet eerst de urenlijst ophalen",
+
+        ["cannot copy row #{Line}, because the project or tag is not available"]
+            = "kan rij #{Line} niet kopieren, omdat het project of tag niet beschikbaar is",
+
+        ["the TimeChimp API returned an unrecognized field. The API may have been updated — please update ChimpCLI to the latest version to avoid data loss."]
+            = "de TimeChimp API retourneerde een onbekend veld. Mogelijk is de API bijgewerkt — update ChimpCLI naar de nieuwste versie om dataverlies te voorkomen.",
+
+        ["api returned httpcode {Code} ({CodeString}): if this persists, try to login"]
+            = "api geeft httpcode {Code} ({CodeString}): misschien moet je opnieuw inloggen",
+
+        ["Setting environment variable {EnableDebug}=1 may show more details."]
+            = "Gebruik omgevingsvariabele {EnableDebug}=1 om mogelijk meer details te krijgen.",
+    };
 }

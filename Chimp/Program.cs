@@ -32,7 +32,7 @@ internal static class Program
         {
             Console.WriteLine($"Error: {Localize(error.Message, error.Args)}");
             if (environment.DebugEnabled) Console.WriteLine(error.StackTrace);
-            else WriteLocalized("Setting environment variable {EnableDebug}=1 may show more details.", new { EnableDebug = environment.ChimpCliDebug });
+            else WriteLocalized("Setting environment variable {EnableDebug}=1 may show more details.", environment.ChimpCliDebug);
             Console.WriteLine();
             WriteLocalized("Try 'chimp help' to get help.");
         }
@@ -56,7 +56,7 @@ internal static class Program
         catch (Exception e)
         {
             // don't throw here because that would block the login flow
-            WriteLocalized("** failed to read state-file: {Message} -- try logging in again or manually remove the file", new { Message = e.Message });
+            WriteLocalized("** failed to read state-file: {Message} -- try logging in again or manually remove the file", e.Message);
         }
 
         return appState ?? PersistablePropertyBag.CreateNew(stateFilePath);

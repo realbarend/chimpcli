@@ -23,7 +23,7 @@ public class LoginCommand : IShellCommand
         if (!string.IsNullOrEmpty(User) && !string.IsNullOrEmpty(Password))
         {
             await service.Login(User, Password, PersistCredentials);
-            WriteLocalized("** successfully logged in as {User}", new { User = User });
+            WriteLocalized("** successfully logged in as {User}", User);
             return;
         }
 
@@ -52,6 +52,6 @@ public class LoginCommand : IShellCommand
         }
 
         await service.Login(user, password, PersistCredentials);
-        WriteLocalized("** successfully logged in as {User}", new { User = user });
+        WriteLocalized("** successfully logged in as {User}", user);
     }
 }

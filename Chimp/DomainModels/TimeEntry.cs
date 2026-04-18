@@ -30,9 +30,9 @@ public record TimeEntry
             return false;
         timeEntry = timeEntry with { DayOfWeek = dayOfWeek };
 
-        if (timeEntry.Duration > TimeSpan.FromHours(10)) throw new Error("timeEntry '{TimeEntry}' issue: to help preventing input mistakes, a time interval is not allowed not exceed 10 hours", new { TimeEntry = timeEntryStr });
-        if (timeEntry.StartTime.HasValue && timeEntry.StartTime.Value.ToTimeSpan() + timeEntry.Duration >= TimeSpan.FromHours(24)) throw new Error("timeEntry '{TimeEntry}' issue: to help preventing input mistakes, start and end must be on the same day", new { TimeEntry = timeEntryStr });
-        if (timeEntry.Duration.TotalMinutes < 0) throw new Error("timeEntry '{TimeEntry}' issue: end time should be after start time", new { TimeEntry = timeEntryStr });
+        if (timeEntry.Duration > TimeSpan.FromHours(10)) throw new Error("timeEntry '{TimeEntry}' issue: to help preventing input mistakes, a time interval is not allowed not exceed 10 hours", timeEntryStr);
+        if (timeEntry.StartTime.HasValue && timeEntry.StartTime.Value.ToTimeSpan() + timeEntry.Duration >= TimeSpan.FromHours(24)) throw new Error("timeEntry '{TimeEntry}' issue: to help preventing input mistakes, start and end must be on the same day", timeEntryStr);
+        if (timeEntry.Duration.TotalMinutes < 0) throw new Error("timeEntry '{TimeEntry}' issue: end time should be after start time", timeEntryStr);
         return true;
     }
 
@@ -95,10 +95,10 @@ public record TimeEntry
     private static TimeOnly ParseTime(string strHour, string strMinute)
     {
         var hour = int.Parse(strHour, CultureInfo.InvariantCulture);
-        if (hour is < 0 or > 23) throw new Error("hour '{Hour}' is invalid", new { Hour = strHour });
+        if (hour is < 0 or > 23) throw new Error("hour '{Hour}' is invalid", strHour);
 
         var minute = string.IsNullOrWhiteSpace(strMinute) ? 0 : int.Parse(strMinute, CultureInfo.InvariantCulture);
-        if (minute is < 0 or > 59) throw new Error("minute '{Minute}' is invalid", new { Minute = strMinute });
+        if (minute is < 0 or > 59) throw new Error("minute '{Minute}' is invalid", strMinute);
 
         return new TimeOnly(hour, minute);
     }
