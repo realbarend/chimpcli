@@ -24,7 +24,7 @@ jobs:
         run: dotnet test
       - name: publish framework-dependent executables
         run: |
-          dotnet msbuild Chimp -t:PublishAllRids -p:Configuration=Release -p:SelfContained=false
+          dotnet msbuild Chimp -t:PublishAllRids -p:Configuration=Release -p:SelfContained=false -p:PublishTrimmed=false
           mkdir -p out
           zip -j out/chimp-win-x64.zip Chimp/bin/Release/net10.0/win-x64/publish/chimp.exe CHANGELOG.md README.md
           tar czf out/chimp-osx-x64.tar.gz -C Chimp/bin/Release/net10.0/osx-x64/publish chimp ../../../../../../CHANGELOG.md ../../../../../../README.md
@@ -33,7 +33,7 @@ jobs:
         # Only build self-contained if a special tag is used, because it uses a lot of github storage.
         if: endsWith(github.ref, '-self-contained')
         run: |
-          dotnet msbuild Chimp -t:PublishAllRids -p:Configuration=Release -p:SelfContained=true
+          dotnet msbuild Chimp -t:PublishAllRids -p:Configuration=Release -p:SelfContained=true -p:PublishTrimmed=true
           mkdir -p out
           zip -j out/chimp-win-x64-selfcontained.zip Chimp/bin/Release/net10.0/win-x64/publish/chimp.exe CHANGELOG.md README.md
           tar czf out/chimp-osx-x64-selfcontained.tar.gz -C Chimp/bin/Release/net10.0/osx-x64/publish chimp ../../../../../../CHANGELOG.md ../../../../../../README.md
