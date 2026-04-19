@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Reflection;
+using System.Text;
 using Chimp.Api;
 using Chimp.Common;
 using Chimp.Services;
@@ -9,6 +10,8 @@ namespace Chimp;
 
 internal static class Program
 {
+    public static readonly Version Version = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(0, 0, 0);
+
     public static async Task Main()
     {
         IEnvironment environment = new SystemEnvironment();
@@ -45,6 +48,8 @@ internal static class Program
         }
         finally
         {
+            await new UpdateChecker(stateBag).CheckAndNotify();
+
             stateBag.Save();
         }
     }

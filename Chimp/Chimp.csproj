@@ -10,6 +10,7 @@
         <Nullable>enable</Nullable>
         <RuntimeIdentifiers>win-x64;osx-x64;linux-x64</RuntimeIdentifiers>
         <AssemblyName>chimp</AssemblyName>
+        <Version>0.0.0</Version>
         <LangVersion>preview</LangVersion>
     </PropertyGroup>
 

@@ -5,6 +5,7 @@ using Chimp.Api;
 using Chimp.Api.Models;
 using Chimp.DomainModels;
 using Chimp.Services;
+using Chimp.Shell;
 
 namespace Chimp;
 
@@ -25,6 +26,8 @@ namespace Chimp;
 [JsonSerializable(typeof(TimeSheetService.TimeSheetDate))]
 [JsonSerializable(typeof(CognitoAuthentication.Credentials))]
 [JsonSerializable(typeof(Dictionary<string, JsonElement>))]
+[JsonSerializable(typeof(UpdateChecker.GitHubRelease))]
+[JsonSerializable(typeof(UpdateChecker.GithubReleaseVersion))]
 [JsonSourceGenerationOptions(
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
     PropertyNameCaseInsensitive = true)]

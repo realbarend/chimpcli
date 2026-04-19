@@ -15,7 +15,7 @@ public static class SerializeExtensions
         }
         catch (JsonException e) when (e.Message.Contains("could not be mapped"))
         {
-            throw new Error("the TimeChimp API returned an unrecognized field. The API may have been updated. In that case, the error can only be fixed by updating ChimpCLI to a newer version.", e);
+            throw new Error("the TimeChimp API returned an unrecognized field. The API may have been updated. In that case, the error can only be fixed by updating TimeChimp CLI to a newer version.", e);
         }
     }
 }

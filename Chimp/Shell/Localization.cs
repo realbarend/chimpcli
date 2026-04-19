@@ -49,7 +49,6 @@ public static class Localization
         {
             UiLanguage.Nl =>
                             """
-            TimeChimp CLI om uren bij te houden
             Meer informatie: https://github.com/realbarend/chimpcli
 
             Parameters:
@@ -84,7 +83,6 @@ public static class Localization
             """,
             _ =>
                      """
-            TimeChimp CLI for tracking hours
             Get more information at https://github.com/realbarend/chimpcli
 
             Parameters:
@@ -119,6 +117,7 @@ public static class Localization
             """,
         };
 
+        Console.WriteLine($"TimeChimp CLI v{Program.Version.ToString(3)}");
         Console.WriteLine(helpText);
     }
 
@@ -249,13 +248,16 @@ public static class Localization
         ["cannot copy row #{Line}, because the project or tag is not available"]
             = "kan rij #{Line} niet kopieren, omdat het project of tag niet beschikbaar is",
 
-        ["the TimeChimp API returned an unrecognized field. The API may have been updated. In that case, the error can only be fixed by updating ChimpCLI to a newer version."]
-            = "de TimeChimp API retourneerde een onbekend veld. Mogelijk is de API bijgewerkt. In dat geval kan de error alleen worden opgelost door ChimpCLI naar een nieuwere versie te updaten.",
+        ["the TimeChimp API returned an unrecognized field. The API may have been updated. In that case, the error can only be fixed by updating TimeChimp CLI to a newer version."]
+            = "de TimeChimp API retourneerde een onbekend veld. Mogelijk is de API bijgewerkt. In dat geval kan de error alleen worden opgelost door TimeChimp CLI naar een nieuwere versie te updaten.",
 
         ["api returned httpcode {Code} ({CodeString}): if this persists, try to login"]
             = "api geeft httpcode {Code} ({CodeString}): misschien moet je opnieuw inloggen",
 
         ["Setting environment variable {EnableDebug}=1 may show more details."]
             = "Gebruik omgevingsvariabele {EnableDebug}=1 om mogelijk meer details te krijgen.",
+
+        ["A newer version of TimeChimp CLI is available ({LatestVersion}): {Url}"]
+            = "Er is een nieuwere versie van TimeChimp CLI beschikbaar ({LatestVersion}): {Url}",
     };
 }

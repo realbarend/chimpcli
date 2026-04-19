@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ChimpCLI is a .NET 10 command-line interface for the TimeChimp time-tracking service. Users log, view, update, and delete time entries from the terminal. It supports multi-language output (English/Dutch), "time travel" to past weeks, and flexible time-entry syntax.
 
+## Environment
+
+When the shell is bash, do not auto-assume WSL. Check `MSYSTEM` — if it is set (e.g. `MINGW64`), you are in Git Bash on Windows and must use `D:/...` paths, not `/mnt/d/...`.
+
 ## Build & run
 
 ```bash
