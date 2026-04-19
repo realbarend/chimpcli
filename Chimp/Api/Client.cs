@@ -1,5 +1,4 @@
 using System.Net.Http.Headers;
-using System.Text.Json;
 using Chimp.Api.Models;
 using Chimp.Common;
 using Chimp.DomainModels;
@@ -22,7 +21,7 @@ public class Client(PersistablePropertyBag stateBag, ICognitoAuthentication auth
         }
 
         // we read and cache the user at login, so it is fetched exactly one time from the api
-        stateBag.Set((await ApiCall(HttpMethod.Get, "user/current")).Deserialize<UserRecord>(false));
+        stateBag.Set((await ApiCall(HttpMethod.Get, "user/current")).Deserialize<UserRecord>());
         _timeSheetCache.Clear();
         ClearProjectsCache();
     }
@@ -43,8 +42,8 @@ public class Client(PersistablePropertyBag stateBag, ICognitoAuthentication auth
 
         var projects = new List<ProjectTask>();
         var shortId = 0;
-        foreach (var project in (await ApiCall(HttpMethod.Get, $"project/{GetUser().Id}/uiselectbyuser")).Deserialize<List<ProjectRecord>>(false).OrderBy(p => p.Intern).ThenBy(p => p.Name))
-        foreach (var projectTask in (await ApiCall(HttpMethod.Get, $"projecttask/uiselect%2Fproject/{project.Id}")).Deserialize<List<ProjectTaskRecord>>(false).OrderBy(t => t.Name))
+        foreach (var project in (await ApiCall(HttpMethod.Get, $"project/{GetUser().Id}/uiselectbyuser")).Deserialize<List<ProjectRecord>>().OrderBy(p => p.Intern).ThenBy(p => p.Name))
+        foreach (var projectTask in (await ApiCall(HttpMethod.Get, $"projecttask/uiselect%2Fproject/{project.Id}")).Deserialize<List<ProjectTaskRecord>>().OrderBy(t => t.Name))
             projects.Add(new ProjectTask { ShortId = new ShortId<ProjectTask>(++shortId), Id = projectTask.Id, ProjectId = project.Id, CustomerId = project.CustomerId, ProjectName = project.Name, TaskName = projectTask.Name });
         var arr = projects.ToArray();
         stateBag.Set(arr);
@@ -69,10 +68,10 @@ public class Client(PersistablePropertyBag stateBag, ICognitoAuthentication auth
     public async Task<TimeSheetRow> AddTimeSheetRow(TimeSheetRowDto dto)
     {
         var obj = TimeSheetRecordMapper.MapToNewRecord(dto, (await GetProjectTasks()).SingleOrDefault(p => p.Id == dto.ProjectTaskId));
-        logger.Log("[DEBUG] about to add using dto: " + JsonSerializer.Serialize(dto, new JsonSerializerOptions { WriteIndented = true }));
-        logger.Log("[DEBUG] about to add using obj: " + JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true }));
-        var newRecord = (await ApiCall(HttpMethod.Post, "time", obj)).Deserialize<TimeSheetRecord>();
-        logger.Log("[DEBUG] added record: " + JsonSerializer.Serialize(newRecord, new JsonSerializerOptions { WriteIndented = true }));
+        logger.Log("[DEBUG] about to add using dto: " + JsonContext.Serialize(dto));
+        logger.Log("[DEBUG] about to add using obj: " + JsonContext.Serialize(obj));
+        var newRecord = (await ApiCall(HttpMethod.Post, "time", obj.Serialize())).Deserialize<TimeSheetRecord>();
+        logger.Log("[DEBUG] added record: " + JsonContext.Serialize(newRecord));
 
         // Update the cache. If we don't have a cache yet, don't bother.
         _timeSheetCache.GetRecords(dto.TimeDetails.Date)?.Add(newRecord.Id, newRecord);
@@ -86,24 +85,24 @@ public class Client(PersistablePropertyBag stateBag, ICognitoAuthentication auth
         var cachedRecords = await EnsureCachedTimeSheetRecords(dto.TimeDetails.Date);
         var record = cachedRecords[id];
 
-        logger.Log("[DEBUG] about to update with dto: " + JsonSerializer.Serialize(dto, new JsonSerializerOptions { WriteIndented = true }));
-        logger.Log("[DEBUG] original record: " + JsonSerializer.Serialize(record, new JsonSerializerOptions { WriteIndented = true }));
+        logger.Log("[DEBUG] about to update with dto: " + JsonContext.Serialize(dto));
+        logger.Log("[DEBUG] original record: " + JsonContext.Serialize(record));
 
         record = TimeSheetRecordMapper.MapToUpdateRecord(record, dto, (await GetProjectTasks()).SingleOrDefault(p => p.Id == dto.ProjectTaskId));
 
-        logger.Log("[DEBUG] updating record: " + JsonSerializer.Serialize(record, new JsonSerializerOptions { WriteIndented = true }));
+        logger.Log("[DEBUG] updating record: " + JsonContext.Serialize(record));
 
-        var updatedRecord = (await ApiCall(HttpMethod.Put, $"time/{record.Id}", record)).Deserialize<TimeSheetRecord>();
+        var updatedRecord = (await ApiCall(HttpMethod.Put, $"time/{record.Id}", record.Serialize())).Deserialize<TimeSheetRecord>();
         cachedRecords[record.Id] = updatedRecord;
 
-        logger.Log("[DEBUG] updated record: " + JsonSerializer.Serialize(updatedRecord, new JsonSerializerOptions { WriteIndented = true }));
+        logger.Log("[DEBUG] updated record: " + JsonContext.Serialize(updatedRecord));
 
         return TimeSheetRecordMapper.MapToTimeSheetRows(cachedRecords).Single(r => r.Id == updatedRecord.Id);
     }
 
     public async Task DeleteTimeSheetRow(TimeSheetRow row)
     {
-        await ApiCall(HttpMethod.Delete, $"time/{row.Id}", Array.Empty<int>());
+        await ApiCall(HttpMethod.Delete, $"time/{row.Id}", "[]");
 
         // Update the cache. If we don't have a cache yet, don't bother.
         _timeSheetCache.GetRecords(row.TimeDetails.Date)?.Remove(row.Id);
@@ -116,13 +115,13 @@ public class Client(PersistablePropertyBag stateBag, ICognitoAuthentication auth
         return cachedRecords;
     }
 
-    private async Task<string> ApiCall(HttpMethod method, string path, object? data = null)
+    private async Task<string> ApiCall(HttpMethod method, string path, string? content = null)
     {
         using var request = new HttpRequestMessage(method, path);
         request.Headers.Add("Accept", "application/json");
         var bearer = await authentication.GetValidBearerToken() ?? throw new Error("attempted to call api with no authtoken (did you log in?)");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearer);
-        if (data != null) request.Content = new StringContent(data.Serialize(), new MediaTypeHeaderValue("application/json"));
+        if (content != null) request.Content = new StringContent(content, new MediaTypeHeaderValue("application/json"));
 
         var response = await httpClient.SendAsync(request);
         if (!response.IsSuccessStatusCode) throw new Error("api returned httpcode {Code} ({CodeString}): if this persists, try to login", (int)response.StatusCode, response.StatusCode.ToString());

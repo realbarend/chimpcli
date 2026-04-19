@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Chimp.Api;
 using Moq;
 using Moq.Protected;
 using Shouldly;
@@ -32,7 +32,7 @@ public class HttpMessageHandlerMocker
                 foreach (var assertion in requestMock.Assertions) assertion(request);
 
                 return new HttpResponseMessage(requestMock.StatusCode)
-                    { Content = requestMock.ResponseJson == null ? null : new StringContent(requestMock.ResponseJson.Serialize()) };
+                    { Content = requestMock.ResponseJson == null ? null : new StringContent(JsonSerializer.Serialize(requestMock.ResponseJson, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase })) };
             });
     }
 

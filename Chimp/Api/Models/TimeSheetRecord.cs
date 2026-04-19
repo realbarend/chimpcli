@@ -1,6 +1,9 @@
+using System.Text.Json.Serialization;
+
 namespace Chimp.Api.Models;
 
 [Serializable]
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public record TimeSheetRecord
 {
     public long Id { get; init; }

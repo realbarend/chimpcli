@@ -6,8 +6,8 @@ namespace Chimp.Services;
 
 public class TimeSheetService(PersistablePropertyBag stateBag, IClient api, DebugLogger logger)
 {
-    private record ApiCredentials(string UserName, string Password);
-    private record TimeSheetDate(DateOnly Date);
+    internal record ApiCredentials(string UserName, string Password);
+    internal record TimeSheetDate(DateOnly Date);
 
     public async Task Login(string userName, string password, bool persistCredentials)
     {

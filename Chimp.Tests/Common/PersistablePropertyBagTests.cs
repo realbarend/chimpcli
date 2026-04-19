@@ -1,14 +1,13 @@
-﻿using System;
+using System;
 using System.IO;
 using Chimp.Common;
+using Chimp.Services;
 using Shouldly;
 
 namespace Chimp.Tests.Common;
 
 public class PersistablePropertyBagTests
 {
-    private record TestObject(DateOnly Date);
-
     [TestCase]
     public void TestSerializeTimeSheetDate()
     {
@@ -17,11 +16,11 @@ public class PersistablePropertyBagTests
         {
             var newBag = PersistablePropertyBag.CreateNew(tempFileName);
             var date = DateOnly.FromDateTime(DateTime.Now).AddDays(7).WeekStart;
-            newBag.Set(new TestObject(date));
+            newBag.Set(new TimeSheetService.TimeSheetDate(date));
             newBag.Save();
 
             var readBag = PersistablePropertyBag.ReadFromDisk(tempFileName);
-            var readValue = readBag.Get<TestObject>();
+            var readValue = readBag.Get<TimeSheetService.TimeSheetDate>();
             readValue?.Date.ShouldBe(date);
         }
         finally

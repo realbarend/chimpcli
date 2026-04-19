@@ -4,6 +4,7 @@
 
     <Allowed From="*" To="System.*" />
     <Allowed From="*" To="Chimp.Common" />
+    <Allowed From="*" To="Chimp" />
 
     <Allowed From="Chimp" To="*" />
 
