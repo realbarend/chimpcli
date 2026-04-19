@@ -17,7 +17,7 @@ public class Client(PersistablePropertyBag stateBag, ICognitoAuthentication auth
         }
         catch (Exception e)
         {
-            throw new Error("login attempt failed: {Message}. Note: timechimp may temporarily block your account after multiple failures.", e.Message);
+            throw new Error("login attempt failed ({Message})", e, e.Message);
         }
 
         // we read and cache the user at login, so it is fetched exactly one time from the api
@@ -32,7 +32,7 @@ public class Client(PersistablePropertyBag stateBag, ICognitoAuthentication auth
         stateBag.Delete<Tag[]>();
     }
 
-    public User GetUser() => stateBag.Get<UserRecord>()?.ToUser() ?? throw new ApplicationException("not logged in");
+    public User GetUser() => stateBag.Get<UserRecord>()?.ToUser() ?? throw new Error("not logged in, use 'chimp login'");
 
     /// <summary>ProjectTasks are cached until explicity flushed.</summary>
     public async Task<ProjectTask[]> GetProjectTasks()

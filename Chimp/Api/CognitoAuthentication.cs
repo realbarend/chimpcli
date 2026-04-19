@@ -62,7 +62,7 @@ public class CognitoAuthentication(PersistablePropertyBag stateBag, HttpClient h
         }
         catch (Exception e)
         {
-            throw new Error("** refresh: refreshing the accesstoken failed: {Message}", e.Message);
+            throw new Error("** refresh: refreshing the accesstoken failed ({Message})", e, e.Message);
         }
     }
 }

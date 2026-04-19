@@ -175,8 +175,8 @@ public static class Localization
         ["cannot parse timeEntry '{TimeEntry}'"]
             = "kan timeEntry '{TimeEntry}' niet parsen",
 
-        ["could not parse the weekdayprefix: use 'mo:', 'tu:', 'we:', 'th:' or 'fr:'"]
-            = "kan de weekdag niet parsen: gebruik 'ma:', 'di:', 'wo:', 'do:' of 'vr:'",
+        ["detected weekdayprefix but could not parse: use 'mo:', 'tu:', 'we:', 'th:' or 'fr:'"]
+            = "weekdag gedetecteerd, maar kan deze niet parsen: gebruik 'ma:', 'di:', 'wo:', 'do:' of 'vr:'",
 
         ["expected '{ParamName}' parameter missing"]
             = "verwachte parameter '{ParamName}' ontbreekt",
@@ -249,8 +249,8 @@ public static class Localization
         ["cannot copy row #{Line}, because the project or tag is not available"]
             = "kan rij #{Line} niet kopieren, omdat het project of tag niet beschikbaar is",
 
-        ["the TimeChimp API returned an unrecognized field. The API may have been updated — please update ChimpCLI to the latest version to avoid data loss."]
-            = "de TimeChimp API retourneerde een onbekend veld. Mogelijk is de API bijgewerkt — update ChimpCLI naar de nieuwste versie om dataverlies te voorkomen.",
+        ["the TimeChimp API returned an unrecognized field. The API may have been updated. In that case, the error can only be fixed by updating ChimpCLI to a newer version."]
+            = "de TimeChimp API retourneerde een onbekend veld. Mogelijk is de API bijgewerkt. In dat geval kan de error alleen worden opgelost door ChimpCLI naar een nieuwere versie te updaten.",
 
         ["api returned httpcode {Code} ({CodeString}): if this persists, try to login"]
             = "api geeft httpcode {Code} ({CodeString}): misschien moet je opnieuw inloggen",

@@ -24,9 +24,18 @@ public class PersistablePropertyBag
 
     public T? Get<T>()
     {
-        return _objects.TryGetValue(typeof(T).Name, out var element)
-            ? JsonContext.DeserializeFromElement<T>(element)
-            : default;
+        if (!_objects.TryGetValue(typeof(T).Name, out var element)) return default;
+
+        try
+        {
+            return JsonContext.DeserializeFromElement<T>(element);
+        }
+        catch (JsonException)
+        {
+            // This happens for example when we changed T structure (e.g. when adding a new required property).
+            _objects.Remove(typeof(T).Name);
+            return default;
+        }
     }
 
     public void Set<T>(T? obj)

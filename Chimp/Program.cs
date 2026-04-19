@@ -30,8 +30,16 @@ internal static class Program
         catch (Error error)
         {
             Console.WriteLine($"Error: {Localize(error.Message, error.Args)}");
-            if (environment.DebugEnabled) Console.WriteLine(error.StackTrace);
-            else WriteLocalized("Setting environment variable {EnableDebug}=1 may show more details.", environment.ChimpCliDebug);
+            if (environment.DebugEnabled)
+            {
+                if (error.InnerException != null) Console.WriteLine(error.InnerException.Message);
+                Console.WriteLine(error.StackTrace);
+            }
+            else
+            {
+                WriteLocalized("Setting environment variable {EnableDebug}=1 may show more details.", environment.ChimpCliDebug);
+            }
+
             Console.WriteLine();
             WriteLocalized("Try 'chimp help' to get help.");
         }
