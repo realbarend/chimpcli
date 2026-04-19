@@ -5,7 +5,6 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using AutoBogus;
 using Chimp.Api;
-using Chimp.Api.AwsCognito;
 using Chimp.Api.Models;
 using Chimp.Common;
 using Chimp.DomainModels;

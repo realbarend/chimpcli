@@ -1,4 +1,4 @@
-﻿namespace Chimp.Api.AwsCognito;
+﻿namespace Chimp.Api;
 
 public interface ICognitoAuthentication
 {

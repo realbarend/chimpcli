@@ -1,6 +1,5 @@
 ﻿using System.Text;
 using Chimp.Api;
-using Chimp.Api.AwsCognito;
 using Chimp.Common;
 using Chimp.Services;
 using Chimp.Shell;

@@ -1,5 +1,7 @@
 ﻿<NsDepCopConfig IsEnabled="true" ChildCanDependOnParentImplicitly="false">
 
+    <Disallowed From="Chimp.Api.AwsCognito" To="Chimp.*" />
+
     <Allowed From="*" To="System.*" />
     <Allowed From="*" To="Chimp.Common" />
 
@@ -11,6 +13,5 @@
 
     <Allowed From="Chimp.Services.*" To="Chimp.Api.*" />
     <Allowed From="Chimp.Api" To="Chimp.Api.*" />
-    <Allowed From="Chimp.Api.AwsCognito.*" To="Amazon.*" />
 
 </NsDepCopConfig>

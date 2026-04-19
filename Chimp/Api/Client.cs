@@ -1,6 +1,5 @@
-﻿using System.Net.Http.Headers;
+using System.Net.Http.Headers;
 using System.Text.Json;
-using Chimp.Api.AwsCognito;
 using Chimp.Api.Models;
 using Chimp.Common;
 using Chimp.DomainModels;
